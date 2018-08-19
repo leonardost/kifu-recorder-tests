@@ -13,6 +13,6 @@ else
 fi
 
 javac -cp .:opencv-341.jar process_image.java
-java -Djava.library.path=".:/home/leo/" -cp .:opencv-341.jar process_image \
-    input 10 1193 202 1294 822 563 855 601 203
+java -Djava.library.path=".:/home/leo/" -cp .:opencv-341.jar \
+    process_image datasets/sequence-1
 rm *.class

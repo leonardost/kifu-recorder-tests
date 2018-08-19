@@ -18,25 +18,22 @@ public class process_image {
 
     public static void main(String[] args) {
 
-        if (args.length != 10) {
+        if (args.length != 1) {
             printUsage();
             return;
         }
 
-        String inputFolder = args[0];
-        int numberOfImages = Integer.parseInt(args[1]);
-        List<Mat> boardImageSeries = readImageFiles(inputFolder, numberOfImages);
+        String imageSequenceFolder = args[0];
+        CornerPositionsFile cornerPositionsFile = new CornerPositionsFile(imageSequenceFolder);
 
-        Ponto[] corners = new Ponto[4];
-        corners[0] = new Ponto(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
-        corners[1] = new Ponto(Integer.parseInt(args[4]), Integer.parseInt(args[5]));
-        corners[2] = new Ponto(Integer.parseInt(args[6]), Integer.parseInt(args[7]));
-        corners[3] = new Ponto(Integer.parseInt(args[8]), Integer.parseInt(args[9]));
+        int numberOfImages = cornerPositionsFile.getNumberOfImages();
+        Ponto[] corners = cornerPositionsFile.getInitialCornersPositions();
+        List<Mat> imageSeries = readImageFiles(imageSequenceFolder + "/images/", numberOfImages);
 
         CornerDetector cornerDetector = new CornerDetector();
 
         int imageIndex = 1;
-        for (Mat image : boardImageSeries) {
+        for (Mat image : imageSeries) {
 
             for (int i = 0; i < 4; i++) {
                 Ponto possibleNewCorner = cornerDetector.updateCorner(image, corners[i], i + 1);
@@ -53,13 +50,16 @@ public class process_image {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: process_image INPUT_FOLDER NUMBER_OF_IMAGES P1 P2 P3 P4");
-        System.out.println("The input folder must contain a sequence of images named as \"frameX.jpg\"");
-        System.out.println("P1, P2, P3 and P4 are the positions of the corners of the board in the first");
-        System.out.println("image, each composed of two integers X and Y separated by spaces.");
+        System.out.println("Usage: process_image IMAGE_SEQUENCE_FOLDER");
+        System.out.println("The image sequence folder must contain a sub-folder named \"images\", containing");
+        System.out.println("a sequence of images named as \"frameX.jpg\". It must also contain a file named");
+        System.out.println("\"corner_positions.log\", which should contain one line for each image in the");
+        System.out.println("sequence. Each line is composed of 8 integers, representing the corner positions");
+        System.out.println("of the Go board within each image. It must also contain an extra line at the");
+        System.out.println("beginning, containing the initial position of the corners.");
         System.out.println();
         System.out.println("Example:");
-        System.out.println("process_image input 7 1210 136 1252 984 617 937 582 235");
+        System.out.println("process_image datasets/sequence-1");
         System.out.println();
         System.out.println("The outputs of this algorithm are the input images with the go board's contour");
         System.out.println("marked in red");
