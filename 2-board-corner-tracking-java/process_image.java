@@ -43,6 +43,7 @@ public class process_image {
             }
 
             printCornerPositions(imageIndex, corners);
+            printDetectionError(cornerPositionsFile, imageIndex, corners);
             drawBoardContourOnImage(image, corners, imageIndex);
             imageIndex++;
         }
@@ -74,16 +75,26 @@ public class process_image {
     }
 
     private static void printCornerPositions(int imageIndex, Ponto[] corners) {
-        // System.out.println("Frame " + imageIndex);
-        // for (int i = 0; i < 4; i++) {
-        //     System.out.print("Corner " + (i + 1) + ": ");
-        //     System.out.println(corners[i]);
-        // }
-        // System.out.println("-----");
+        System.out.println("Frame " + imageIndex);
         for (int i = 0; i < 4; i++) {
-            System.out.print(corners[i].x + " " + corners[i].y + " ");
+            System.out.print("Corner " + (i + 1) + ": ");
+            System.out.println(corners[i]);
         }
-        System.out.println();
+        System.out.println("-----");
+        // for (int i = 0; i < 4; i++) {
+        //     System.out.print(corners[i].x + " " + corners[i].y + " ");
+        // }
+        // System.out.println();
+    }
+
+    private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Ponto[] corners) {
+        int distanceToExpectedPosition = 0;
+        Ponto[] expectedPoints = cornerPositionsFile.getCornerPositions(imageIndex);
+        for (int i = 0; i < 4; i++) {
+            distanceToExpectedPosition += corners[i].manhattanDistanceTo(expectedPoints[i]);
+        }
+        System.out.println("Error: " + distanceToExpectedPosition);
+        System.out.println("=====");
     }
 
     private static void drawBoardContourOnImage(Mat image, Ponto[] corners, int imageIndex) {

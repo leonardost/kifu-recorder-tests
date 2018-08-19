@@ -49,4 +49,8 @@ public class CornerPositionsFile {
         return cornerPositions.get(0);
     }
 
+    public Ponto[] getCornerPositions(int frameNumber) {
+        return cornerPositions.get(frameNumber);
+    }
+
 }
