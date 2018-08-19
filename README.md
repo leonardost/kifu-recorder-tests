@@ -6,12 +6,12 @@ Recorder are organized and stored.
 This feature allows the camera to move while recording a game and still keep
 track of the game board correctly.
 
-A first test was done in Python + OpenCV because I didn't want to compile the
-library just to use it. The second test (with Java) was done after I managed
-to compile the library.
+A first test was made in Python + OpenCV for practicity reasons. The second
+test, which was made in Java, was done after I managed to compile the OpenCV
+library with Java bindings.
 
 ## Datasets
-The sets of images used for the tests are freely available and can be accesed
+The sets of images used for the tests are freely available and can be
 downloaded at:
 
 - https://s3-us-west-2.amazonaws.com/kifu-recorder-tests-datasets/datasets/sequence-1.zip
