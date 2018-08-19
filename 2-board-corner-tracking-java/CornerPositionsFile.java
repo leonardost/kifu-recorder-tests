@@ -32,13 +32,10 @@ public class CornerPositionsFile {
         String[] integersAsString = line.split(" ");
         Ponto[] points = new Ponto[4];
 
-        for (int i = 0; i < integersAsString.length; i++) {
-            if (i % 2 == 0) {
-                points[(int)i / 2] = new Ponto();
-                points[(int)i / 2].x = Integer.parseInt(integersAsString[i]);
-            } else {
-                points[(int)i / 2].y = Integer.parseInt(integersAsString[i]);
-            }
+        for (int i = 0; i < 4; i++) {
+            points[i] = new Ponto();
+            points[i].x = Integer.parseInt(integersAsString[i * 2]);
+            points[i].y = Integer.parseInt(integersAsString[i * 2 + 1]);
         }
 
         return points;
