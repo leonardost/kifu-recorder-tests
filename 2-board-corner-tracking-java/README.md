@@ -78,6 +78,8 @@ methods to improve robustness of the corner tracking.
 
 #### 20/08/2018 22:50
 
+Commit 65407615ae03c8a018b7dc96c827995463361228
+
 I started developing the auxiliary method that checks if the board is contained
 in the contour or not by counting the difference in the number of squares
 found.

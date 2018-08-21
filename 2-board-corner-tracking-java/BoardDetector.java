@@ -123,6 +123,8 @@ public class BoardDetector {
             MatOfPoint2f contour2f = new MatOfPoint2f();
             MatOfPoint2f approx2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
+            // The 0.1 means this detection is very lenient, as the goal here
+            // is to find as most squares as possible inside the image
             Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.1, true);
 
             MatOfPoint approx = new MatOfPoint();
