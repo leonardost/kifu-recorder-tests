@@ -28,6 +28,27 @@ frame, we search for a region that most closely resembles the one we captured
 in the frame before. When we find that region, we update the corner according
 to the position of that region. This approach has not been tested yet.
 
+### Auxiliary method - is the contour surrounding the board?
+
+To check whether a set of corners is valid or not, a method to check if the
+board is currently surrounded by the contour could be created. This method
+would tell if the new found corners are valid. The feasability of this method
+is being tested.
+
+#### Method 1
+
+My first thought is to see if the number of squares found inside the ortogonal
+image is too different from the last image. In tests done with the 6 first
+sequences of images, a difference of around 15 squares means that something
+went wrong and the user should intervene.
+
+#### Method 2
+
+My second idea is to calculate the difference between the current ortogonal
+image and the last ortogonal image. If the difference is too big, it means that
+the camera must have moved more than it should. A reasonable threshould should
+be decided after many empirical tests.
+
 Results
 -------
 
@@ -54,3 +75,9 @@ correctly.
 Sequence 4 had a mistake in frame 15, and sequence 6 already had an error in
 frame 5, which persisted to the end. This may be the best subject to test
 methods to improve robustness of the corner tracking.
+
+#### 20/08/2018 22:50
+
+I started developing the auxiliary method that checks if the board is contained
+in the contour or not by counting the difference in the number of squares
+found.
