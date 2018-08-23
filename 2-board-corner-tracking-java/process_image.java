@@ -36,6 +36,7 @@ public class process_image {
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
+            cornerDetector.imageIndex = imageIndex;
 
             Ponto[] possibleNewCorners = new Ponto[4];
             for (int i = 0; i < 4; i++) {
