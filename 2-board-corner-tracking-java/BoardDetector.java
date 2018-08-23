@@ -1,4 +1,3 @@
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -14,18 +13,27 @@ import java.util.List;
 
 public class BoardDetector {
 
+    public static final int STATE_BOARD_IS_INSIDE = 1;
+    public static final int STATE_LOOKING_FOR_BOARD = 2;
+
     public static final int ORTOGONAL_BOARD_IMAGE_SIZE = 500;
     public static final int THRESHOULD = 15;
+    // This is the threshould of quadrilaterals to consider
+    // that the board was found again
+    public static final int RECOVERY_THRESHOULD = 4;
     public static final Scalar RED = new Scalar(0, 0, 255);
     public static final Scalar BLUE = new Scalar(255, 0, 0);
 
+    private int state;
     public int imageIndex;
     private Mat image;
     private int numberOfQuadrilateralsFound;
     private int lastNumberOfQuadrilateralsFound;
+    private int lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour;
 
     public void init() {
         lastNumberOfQuadrilateralsFound = -1;
+        state = STATE_BOARD_IS_INSIDE;
     }
 
     public void setImage(Mat image) {
@@ -36,11 +44,18 @@ public class BoardDetector {
         Mat ortogonalBoardImage = getOrtogonalBoardImage(corners);
         numberOfQuadrilateralsFound = calculateNumberOfQuadrilateralsInside(ortogonalBoardImage);
 
-        boolean result = (lastNumberOfQuadrilateralsFound == -1
-            || Math.abs(lastNumberOfQuadrilateralsFound - numberOfQuadrilateralsFound) < THRESHOULD);
+        boolean isBoardInsideContour = isBoardInsideContourAccordingToDetection();
+
+        if (isBoardInsideContour) {
+            lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour = numberOfQuadrilateralsFound;
+            state = STATE_BOARD_IS_INSIDE;
+        } else {
+            state = STATE_LOOKING_FOR_BOARD;
+        }
+
         lastNumberOfQuadrilateralsFound = numberOfQuadrilateralsFound;
 
-        return result || true;
+        return isBoardInsideContour;
     }
 
     private Mat getOrtogonalBoardImage(Ponto[] corners) {
@@ -55,10 +70,10 @@ public class BoardDetector {
 
         Mat boardPositionInImage = new Mat(4, 1, CvType.CV_32FC2);
         boardPositionInImage.put(0, 0,
-            corners[0].x, corners[0].y,
-            corners[1].x, corners[1].y,
-            corners[2].x, corners[2].y,
-            corners[3].x, corners[3].y);
+                corners[0].x, corners[0].y,
+                corners[1].x, corners[1].y,
+                corners[2].x, corners[2].y,
+                corners[3].x, corners[3].y);
 
         Mat transformationMatrix = Imgproc.getPerspectiveTransform(boardPositionInImage, ortogonalImageCorners);
         Imgproc.warpPerspective(image, ortogonalBoardImage, transformationMatrix, ortogonalBoardImage.size());
@@ -151,6 +166,27 @@ public class BoardDetector {
             Imgproc.drawContours(imageWithQuadrilateralsDetected, contoursList, -1, BLUE, 2);
         }
         Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".jpg", imageWithQuadrilateralsDetected);
+    }
+
+    public boolean isBoardInsideContourAccordingToDetection() {
+        if (state == STATE_BOARD_IS_INSIDE) {
+            return isFirstDetection() || calculateDifferenceOfDetectedQuadrilaterals() < THRESHOULD;
+        } else {
+            return lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour - numberOfQuadrilateralsFound
+                <= RECOVERY_THRESHOULD;
+        }
+    }
+
+    public boolean isFirstDetection() {
+        return lastNumberOfQuadrilateralsFound == -1;
+    }
+
+    public int calculateDifferenceOfDetectedQuadrilaterals() {
+        return lastNumberOfQuadrilateralsFound - numberOfQuadrilateralsFound;
+    }
+
+    public int getNumberOfQuadrilateralsFound() {
+        return numberOfQuadrilateralsFound;
     }
 
 }
