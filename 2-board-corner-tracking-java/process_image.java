@@ -28,14 +28,14 @@ public class process_image {
 
         int numberOfImages = cornerPositionsFile.getNumberOfImages();
         Ponto[] corners = cornerPositionsFile.getInitialCornersPositions();
-        List<Mat> imageSeries = readImageFiles(imageSequenceFolder + "/images/", numberOfImages);
 
         CornerDetector cornerDetector = new CornerDetector();
         BoardDetector boardDetector = new BoardDetector();
         boardDetector.init();
 
-        int imageIndex = 1;
-        for (Mat image : imageSeries) {
+        for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
+
+            Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
 
             Ponto[] possibleNewCorners = new Ponto[4];
             for (int i = 0; i < 4; i++) {
@@ -60,7 +60,6 @@ public class process_image {
             printDetectionError(cornerPositionsFile, imageIndex, corners);
             drawBoardContourOnImage(image, corners, imageIndex);
             System.out.println("=====");
-            imageIndex++;
         }
 
     }
@@ -81,12 +80,8 @@ public class process_image {
         System.out.println("marked in red");
     }
 
-    private static List<Mat> readImageFiles(String inputFolder, int numberOfImages) {
-        ArrayList<Mat> boardImages = new ArrayList<>();
-        for (int i = 1; i <= numberOfImages; i++) {
-            boardImages.add(Imgcodecs.imread(inputFolder + "/frame" + i + ".jpg"));
-        }
-        return boardImages;
+    private static Mat readImageFile(String inputFolder, int imageNumber) {
+        return Imgcodecs.imread(inputFolder + "/frame" + imageNumber + ".jpg");
     }
 
     private static void printCornerPositions(int imageIndex, Ponto[] corners) {
