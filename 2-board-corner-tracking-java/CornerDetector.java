@@ -188,11 +188,10 @@ public class CornerDetector {
         int MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS = 10;
         // Because go stones don't vary much in size, these parameters can be tweaked very nicely to find them
         int MIN_RADIUS = 20;
-        int MAX_RADIUS = 50;
+        int MAX_RADIUS = 40;
         Imgproc.HoughCircles(grayscaleImage, circles, Imgproc.HOUGH_GRADIENT, 1.0,
                 MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS,
-                100.0, 30.0, MIN_RADIUS, MAX_RADIUS); // change the last two parameters
-                // (min_radius & max_radius) to detect larger circles
+                100.0, 30.0, MIN_RADIUS, MAX_RADIUS);
 
         List<Ponto> possibleCenters = new ArrayList<>();
 

@@ -1,3 +1,4 @@
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -26,13 +27,18 @@ public class BoardDetector {
 
     private int state;
     public int imageIndex;
+
     private Mat image;
+    private Mat lastImage;
+    private Mat lastImageWhenBoardWasInside;
+
     private int numberOfQuadrilateralsFound;
     private int lastNumberOfQuadrilateralsFound;
     private int lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour;
 
     public void init() {
         lastNumberOfQuadrilateralsFound = -1;
+        lastImageWhenBoardWasInside = null;
         state = STATE_BOARD_IS_INSIDE;
     }
 
@@ -44,18 +50,21 @@ public class BoardDetector {
         Mat ortogonalBoardImage = getOrtogonalBoardImage(corners);
         numberOfQuadrilateralsFound = calculateNumberOfQuadrilateralsInside(ortogonalBoardImage);
 
-        boolean isBoardInsideContour = isBoardInsideContourAccordingToDetection();
+        boolean isBoardInsideContourAccordingToMethod1 = isBoardInsideContourAccordingToQuadrilateralsDetection();
+        boolean isBoardInsideContourAccordingToMethod2 = isBoardInsideContourAccordingToImageDifference();
 
-        if (isBoardInsideContour) {
+        if (isBoardInsideContourAccordingToMethod1) {
             lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour = numberOfQuadrilateralsFound;
+            lastImageWhenBoardWasInside = image;
             state = STATE_BOARD_IS_INSIDE;
         } else {
             state = STATE_LOOKING_FOR_BOARD;
         }
 
+        lastImage = image;
         lastNumberOfQuadrilateralsFound = numberOfQuadrilateralsFound;
 
-        return isBoardInsideContour;
+        return isBoardInsideContourAccordingToMethod1;
     }
 
     private Mat getOrtogonalBoardImage(Ponto[] corners) {
@@ -168,7 +177,7 @@ public class BoardDetector {
         Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".jpg", imageWithQuadrilateralsDetected);
     }
 
-    public boolean isBoardInsideContourAccordingToDetection() {
+    private boolean isBoardInsideContourAccordingToQuadrilateralsDetection() {
         if (state == STATE_BOARD_IS_INSIDE) {
             return isFirstDetection() || calculateDifferenceOfDetectedQuadrilaterals() < THRESHOULD;
         } else {
@@ -177,16 +186,29 @@ public class BoardDetector {
         }
     }
 
-    public boolean isFirstDetection() {
+    private boolean isFirstDetection() {
         return lastNumberOfQuadrilateralsFound == -1;
     }
 
-    public int calculateDifferenceOfDetectedQuadrilaterals() {
+    private int calculateDifferenceOfDetectedQuadrilaterals() {
         return lastNumberOfQuadrilateralsFound - numberOfQuadrilateralsFound;
     }
 
     public int getNumberOfQuadrilateralsFound() {
         return numberOfQuadrilateralsFound;
+    }
+
+    private boolean isBoardInsideContourAccordingToImageDifference() {
+        if (lastImageWhenBoardWasInside == null) return true;
+        double DIFFERENCE_THRESHOULD = 0.07;
+        return calculateDifferenceBetween(lastImageWhenBoardWasInside, image) < DIFFERENCE_THRESHOULD;
+    }
+
+    private double calculateDifferenceBetween(Mat image1, Mat image2) {
+        double errorL2 = Core.norm(image1, image2, Core.NORM_L2);
+        double similarity = errorL2 / (double)(image1.rows() * image1.cols());
+        System.out.println("Similarity of images by calculating L2 error: " + similarity);
+        return similarity;
     }
 
 }
