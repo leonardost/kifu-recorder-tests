@@ -17,6 +17,11 @@ from the board, from a histogram perspective it may be close enough (which was
 confirmed by the experiment). Image pairs 6 and 7 have some brightness
 differences and an added stone.
 
+Image pair 9 has a hand covering a small part of the board. The metrics
+indicate the images are very similar, and that is true, the image is mostly the
+same except for the hand. This shows that image similarity alone is not a good
+indicator of whether or not the board is in the image.
+
 Image similarity metrics that were tested
 -----------------------------------------
 

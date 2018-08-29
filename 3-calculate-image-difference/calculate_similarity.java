@@ -7,7 +7,7 @@ public class calculate_similarity {
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
 
     public static void main(String[] args) {
-        for (int i = 0; i <= 8; i++) {
+        for (int i = 0; i <= 9; i++) {
             Mat imageA = Imgcodecs.imread("image" + i + "a.jpg");
             Mat imageB = Imgcodecs.imread("image" + i + "b.jpg");
 
@@ -23,8 +23,12 @@ public class calculate_similarity {
             System.out.println(similarityCalculator.templateMatchingCcoeff());
             System.out.println("Template matching sqdiff:");
             System.out.println(similarityCalculator.templateMatchingSqdiff());
-            System.out.println("ORB feature matching:");
-            System.out.println(similarityCalculator.orbFeatureMatching());
+            System.out.println("ORB feature matching (average of distance of 15 best descriptors):");
+            System.out.println(similarityCalculator.orbFeatureMatching15BestDescriptors());
+            System.out.println("ORB feature matching (average of distance of 100 best descriptors):");
+            System.out.println(similarityCalculator.orbFeatureMatching100BestDescriptors());
+            System.out.println("ORB feature matching (average of distance of 10 worst descriptors):");
+            System.out.println(similarityCalculator.orbFeatureMatching10WorstDescriptors());
             System.out.println();
             System.out.println("==========");
             System.out.println();

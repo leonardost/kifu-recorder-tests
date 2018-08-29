@@ -22,6 +22,7 @@ public class SimilarityCalculator {
 
     private Mat imageA;
     private Mat imageB;
+    private List<DMatch> matchesList;
 
     public SimilarityCalculator(Mat imageA, Mat imageB) {
         this.imageA = imageA;
@@ -71,7 +72,7 @@ public class SimilarityCalculator {
      * https://stackoverflow.com/questions/34762865/comparing-two-images-with-opencv-in-java
      * https://stackoverflow.com/questions/24569386/opencv-filtering-orb-matches
      */
-    public double orbFeatureMatching() {
+    public double orbFeatureMatching15BestDescriptors() {
         FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
         MatOfKeyPoint keypointsA = new MatOfKeyPoint();
         MatOfKeyPoint keypointsB = new MatOfKeyPoint();
@@ -88,7 +89,7 @@ public class SimilarityCalculator {
         MatOfDMatch matches = new MatOfDMatch();
         matcher.match(descriptorsA, descriptorsB, matches);
 
-        List<DMatch> matchesList = matches.toList();
+        matchesList = matches.toList();
         Collections.sort(matchesList, new Comparator<DMatch>() {
             public int compare(DMatch a, DMatch b) {
                 if (a.distance < b.distance) return -1;
@@ -100,12 +101,37 @@ public class SimilarityCalculator {
         // It seems there isn't a standard way to calculate the similarity between two
         // images based on feature matching, so I created one from the top of my head
         double averageDistanceOfClosestDescriptors = 0;
+        // 15 might be a bad number because in Kifu Recorder the images are mostly similar.
+        // Therefore, we want to discard images where a hand is covering part of the board,
+        // for example. Picking only the best descriptor matches might make images that
+        // should not be labeled as similar to be marked as such. Maybe picking the worst
+        // descriptors might be interesting? Because in similar images, even the worst
+        // descriptors should be much closer than the worst descriptors in different images.
         int numberOfDescriptorsToConsider = 15;
         for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
             averageDistanceOfClosestDescriptors += matchesList.get(i).distance;
         }
 
         return 1 - (averageDistanceOfClosestDescriptors / numberOfDescriptorsToConsider) / 100;
+    }
+
+    public double orbFeatureMatching100BestDescriptors() {
+        double averageDistanceOfClosestDescriptors = 0;
+        int numberOfDescriptorsToConsider = 100;
+        for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
+            averageDistanceOfClosestDescriptors += matchesList.get(i).distance;
+        }
+        return 1 - (averageDistanceOfClosestDescriptors / numberOfDescriptorsToConsider) / 100;
+    }
+
+    public double orbFeatureMatching10WorstDescriptors() {
+        double averageDistanceOfFarthestDescriptors = 0;
+        int numberOfDescriptorsToConsider = 10;
+        int numberOfMatches = matchesList.size();
+        for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
+            averageDistanceOfFarthestDescriptors += matchesList.get(numberOfMatches - (i + 1)).distance;
+        }
+        return 1 - (averageDistanceOfFarthestDescriptors / numberOfDescriptorsToConsider) / 100;
     }
 
 }
