@@ -35,6 +35,7 @@ public class process_image {
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
+            long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             cornerDetector.imageIndex = imageIndex;
 
@@ -60,6 +61,9 @@ public class process_image {
             // printCornerPositions(imageIndex, corners);
             printDetectionError(cornerPositionsFile, imageIndex, corners);
             drawBoardContourOnImage(image, corners, imageIndex);
+
+            System.out.println();
+            System.out.println("Elapsed time = " + (System.nanoTime() - startTime) / 1000000000.0);
             System.out.println("=====");
         }
 
