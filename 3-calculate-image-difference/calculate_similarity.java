@@ -7,7 +7,7 @@ public class calculate_similarity {
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
 
     public static void main(String[] args) {
-        for (int i = 0; i <= 6; i++) {
+        for (int i = 0; i <= 8; i++) {
             Mat imageA = Imgcodecs.imread("image" + i + "a.jpg");
             Mat imageB = Imgcodecs.imread("image" + i + "b.jpg");
 

@@ -9,12 +9,13 @@ how different the images are.
 Image pairs 1, 2 and 3 should be very similar, almost identical, and image
 pairs 4 and 5 should have more differences. Image pair 0 is identical, they are
 literally the same image, and can be used as a comparison baseline. Image pair
-6 is very different, one is a go board and the other is a cat (image taken from
+8 is very different, one is a go board and the other is a cat (image taken from
 https://www.pexels.com/photo/cat-whiskers-kitty-tabby-20787/), so this should
 be the most dissimilar pair. However, the cat has somewhat the same color of
 the board, so, although from a image feature point of view it is very different
 from the board, from a histogram perspective it may be close enough (which was
-confirmed by the experiment).
+confirmed by the experiment). Image pairs 6 and 7 have some brightness
+differences and an added stone.
 
 Image similarity metrics that were tested
 -----------------------------------------
@@ -40,6 +41,3 @@ Running
 -------
 
 Tests can be run by running the compile_and_run.sh script without parameters.
-
-Log
----
