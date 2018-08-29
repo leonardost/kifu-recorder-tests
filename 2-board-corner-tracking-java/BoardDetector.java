@@ -1,14 +1,23 @@
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.ORB;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,15 +39,21 @@ public class BoardDetector {
 
     private Mat image;
     private Mat lastImage;
+    private Mat lastOrtogonalImage;
     private Mat lastImageWhenBoardWasInside;
+    private Mat lastOrtogonalImageWhenBoardWasInside;
 
     private int numberOfQuadrilateralsFound;
     private int lastNumberOfQuadrilateralsFound;
     private int lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour;
 
+    private List<DMatch> matchesList;
+
     public void init() {
         lastNumberOfQuadrilateralsFound = -1;
         lastImageWhenBoardWasInside = null;
+        lastOrtogonalImage = null;
+        lastOrtogonalImageWhenBoardWasInside = null;
         state = STATE_BOARD_IS_INSIDE;
     }
 
@@ -51,20 +66,27 @@ public class BoardDetector {
         numberOfQuadrilateralsFound = calculateNumberOfQuadrilateralsInside(ortogonalBoardImage);
 
         boolean isBoardInsideContourAccordingToMethod1 = isBoardInsideContourAccordingToQuadrilateralsDetection();
-        boolean isBoardInsideContourAccordingToMethod2 = isBoardInsideContourAccordingToImageDifference();
+        boolean isBoardInsideContourAccordingToMethod2 = isBoardInsideContourAccordingToImageSimilarity(ortogonalBoardImage);
 
-        if (isBoardInsideContourAccordingToMethod1) {
+        System.out.println(isBoardInsideContourAccordingToMethod1);
+        System.out.println(isBoardInsideContourAccordingToMethod2);
+
+        if (isBoardInsideContourAccordingToMethod1 && isBoardInsideContourAccordingToMethod2 ||
+            calculateSimilarityWithorbFeatureMatching() > 0.97
+        ) {
             lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour = numberOfQuadrilateralsFound;
             lastImageWhenBoardWasInside = image;
+            lastOrtogonalImageWhenBoardWasInside = ortogonalBoardImage;
             state = STATE_BOARD_IS_INSIDE;
         } else {
             state = STATE_LOOKING_FOR_BOARD;
         }
 
         lastImage = image;
+        lastOrtogonalImage = ortogonalBoardImage;
         lastNumberOfQuadrilateralsFound = numberOfQuadrilateralsFound;
 
-        return isBoardInsideContourAccordingToMethod1;
+        return state == STATE_BOARD_IS_INSIDE;
     }
 
     private Mat getOrtogonalBoardImage(Ponto[] corners) {
@@ -198,16 +220,68 @@ public class BoardDetector {
         return numberOfQuadrilateralsFound;
     }
 
-    private boolean isBoardInsideContourAccordingToImageDifference() {
+    private boolean isBoardInsideContourAccordingToImageSimilarity(Mat ortogonalBoardImage) {
         if (lastImageWhenBoardWasInside == null) return true;
-        double DIFFERENCE_THRESHOULD = 0.07;
-        return calculateDifferenceBetween(lastImageWhenBoardWasInside, image) < DIFFERENCE_THRESHOULD;
+        generateDescriptorMatches(lastOrtogonalImageWhenBoardWasInside, ortogonalBoardImage);
+        double SIMILARITY_THRESHOULD = 0.9;
+        return calculateSimilarityWithorbFeatureMatching() > SIMILARITY_THRESHOULD;
+        // return calculateSimilarityWithorbFeatureMatching10WorstDescriptors() > 0.3;
     }
 
-    private double calculateDifferenceBetween(Mat image1, Mat image2) {
-        double errorL2 = Core.norm(image1, image2, Core.NORM_L2);
-        double similarity = errorL2 / (double)(image1.rows() * image1.cols());
-        System.out.println("Similarity of images by calculating L2 error: " + similarity);
+    private void generateDescriptorMatches(Mat image1, Mat image2) {
+        Mat processedImage1 = image1.clone();
+        Mat processedImage2 = image2.clone();
+        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_1.jpg", processedImage1);
+        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_2.jpg", processedImage2);
+
+        FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
+        MatOfKeyPoint keypointsA = new MatOfKeyPoint();
+        MatOfKeyPoint keypointsB = new MatOfKeyPoint();
+        detector.detect(processedImage1, keypointsA);
+        detector.detect(processedImage2, keypointsB);
+
+        DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        Mat descriptorsA = new Mat();
+        Mat descriptorsB = new Mat();
+        extractor.compute(processedImage1, keypointsA, descriptorsA);
+        extractor.compute(processedImage2, keypointsB, descriptorsB);
+
+        DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+        MatOfDMatch matches = new MatOfDMatch();
+        matcher.match(descriptorsA, descriptorsB, matches);
+
+        matchesList = matches.toList();
+        Collections.sort(matchesList, new Comparator<DMatch>() {
+            public int compare(DMatch a, DMatch b) {
+                if (a.distance < b.distance) return -1;
+                else if (a.distance > b.distance) return 1;
+                return 0;
+            }
+        });
+    }
+
+    private double calculateSimilarityWithorbFeatureMatching() {
+        double averageDistanceOfClosestDescriptors = 0;
+        int numberOfDescriptorsToConsider = 15;
+        for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
+            averageDistanceOfClosestDescriptors += matchesList.get(i).distance;
+        }
+
+        double similarity = 1 - (averageDistanceOfClosestDescriptors / numberOfDescriptorsToConsider) / 100;
+        System.out.println("Similarity of images by calculating average distance of ORB descriptors: " + similarity);
+        return similarity;
+    }
+
+    public double calculateSimilarityWithorbFeatureMatching10WorstDescriptors() {
+        double averageDistanceOfClosestDescriptors = 0;
+        int numberOfDescriptorsToConsider = 10;
+        int numberOfMatches = matchesList.size();
+        for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
+            averageDistanceOfClosestDescriptors += matchesList.get(numberOfMatches - (i + 1)).distance;
+        }
+
+        double similarity = 1 - (averageDistanceOfClosestDescriptors / numberOfDescriptorsToConsider) / 100;
+        System.out.println("Similarity of images by calculating average distance of worst ORB descriptors: " + similarity);
         return similarity;
     }
 
