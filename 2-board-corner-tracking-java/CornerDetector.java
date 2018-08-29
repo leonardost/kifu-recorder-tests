@@ -21,7 +21,7 @@ public class CornerDetector {
         this.cornerIndex = cornerIndex;
 
         Mat regionImage = getRegionOfInterestAround(corner, image);
-        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
 
         Ponto candidateCornerHarris = detectCornerByHarrisDetection(regionImage);
         // This should have precedence over the Harris Corner detector because a circle
@@ -181,7 +181,7 @@ public class CornerDetector {
 
         // An image that's so blurry actually helps a lot in finding circles
         Imgproc.medianBlur(grayscaleImage, grayscaleImage, 5);
-        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_2_frame" + imageIndex + ".jpg", grayscaleImage);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_2_frame" + imageIndex + ".jpg", grayscaleImage);
         Mat circles = new Mat();
 
         // There must be only one stone in a corner, that's why this parameter is so high
@@ -207,7 +207,7 @@ public class CornerDetector {
 
             possibleCenters.add(new Ponto((int)Math.round(c[0]), (int)Math.round(c[1])));
         }
-        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_3_frame" + imageIndex + ".jpg", showCircleDetectionImage);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_3_frame" + imageIndex + ".jpg", showCircleDetectionImage);
 
         return getNearestPointToCenterOfRegionOfInterest(possibleCenters);
     }
