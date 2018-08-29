@@ -71,8 +71,8 @@ public class BoardDetector {
         System.out.println(isBoardInsideContourAccordingToMethod1);
         System.out.println(isBoardInsideContourAccordingToMethod2);
 
-        if (isBoardInsideContourAccordingToMethod1 && isBoardInsideContourAccordingToMethod2 ||
-            calculateSimilarityWithorbFeatureMatching() > 0.97
+        if (isBoardInsideContourAccordingToMethod1 && isBoardInsideContourAccordingToMethod2
+            // calculateSimilarityWithorbFeatureMatching() > 0.97
         ) {
             lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour = numberOfQuadrilateralsFound;
             lastImageWhenBoardWasInside = image;
@@ -114,7 +114,7 @@ public class BoardDetector {
     }
 
     private int calculateNumberOfQuadrilateralsInside(Mat ortogonalBoardImage) {
-        Mat imageWithBordersDetected = detectBordersIn(ortogonalBoardImage);
+        Mat imageWithBordersDetected = detectBordersIn(addBlackBorderAround(ortogonalBoardImage));
         outputImageWithBorders(imageWithBordersDetected);
 
         List<MatOfPoint> contours = detectContoursIn(imageWithBordersDetected);
@@ -126,6 +126,12 @@ public class BoardDetector {
         System.out.println("Number of quadrilaterals found: " + quadrilaterals.size());
 
         return quadrilaterals.size();
+    }
+
+    private Mat addBlackBorderAround(Mat image) {
+        Mat imageWithBlackBorder = image.clone();
+        Imgproc.rectangle(imageWithBlackBorder, new Point(0, 0), new Point(499, 499), new Scalar(0, 0, 0), 1);
+        return imageWithBlackBorder;
     }
 
     private Mat detectBordersIn(Mat image) {
