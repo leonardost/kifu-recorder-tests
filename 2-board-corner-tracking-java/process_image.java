@@ -10,6 +10,10 @@ import org.opencv.imgproc.Imgproc;
 import java.util.List;
 import java.util.ArrayList;
 
+import src.boardDetector.BoardDetector;
+import src.cornerDetector.CornerDetector;
+import src.Ponto;
+
 public class process_image {
 
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }

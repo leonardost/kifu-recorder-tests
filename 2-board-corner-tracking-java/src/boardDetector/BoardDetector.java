@@ -1,3 +1,5 @@
+package src.boardDetector;
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.DMatch;
@@ -20,6 +22,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
+import src.Ponto;
 
 public class BoardDetector {
 

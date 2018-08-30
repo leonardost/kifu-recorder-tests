@@ -20,4 +20,4 @@ else
     java -Djava.library.path=".:/home/leo/" -cp .:opencv-341.jar process_image "$1" > results.log
 fi
 
-rm *.class
+find . -name \*.class -type f -delete 

@@ -1,3 +1,5 @@
+package src.cornerDetector;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -9,6 +11,9 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import src.Ponto;
+import src.PointCluster;
 
 public class CornerDetector {
 

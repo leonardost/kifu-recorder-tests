@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import src.Ponto;
+
 public class CornerPositionsFile {
 
     private List<Ponto[]> cornerPositions;
