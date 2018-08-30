@@ -1,18 +1,18 @@
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+
 import java.util.List;
 import java.util.ArrayList;
 
 import src.boardDetector.BoardDetector;
 import src.cornerDetector.CornerDetector;
 import src.Ponto;
+import src.ImageUtils;
 
 public class process_image {
 
@@ -35,7 +35,6 @@ public class process_image {
 
         CornerDetector cornerDetector = new CornerDetector();
         BoardDetector boardDetector = new BoardDetector();
-        boardDetector.init();
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
@@ -48,12 +47,13 @@ public class process_image {
                 possibleNewCorners[i] = cornerDetector.updateCorner(image, corners[i], i + 1);
             }
 
-            boardDetector.setImage(image);
-            boardDetector.imageIndex = imageIndex;
+            Mat ortogonalBoardImage = ImageUtils.generateOrtogonalBoardImage(image, possibleNewCorners);
+            Imgcodecs.imwrite("processing/ortogonal" + imageIndex + ".jpg", ortogonalBoardImage);
+            boardDetector.setImageIndex(imageIndex);
 
             System.out.println("Frame " + imageIndex);
 
-            if (boardDetector.isBoardInsideContour(possibleNewCorners)) {
+            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
                 for (int i = 0; i < 4; i++) {
                     corners[i] = possibleNewCorners[i];
