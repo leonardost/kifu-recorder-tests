@@ -1,5 +1,6 @@
 package src.cornerDetector;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -103,26 +104,8 @@ public class CornerDetector {
     }
 
     private double calculateHarrisCornerThreshold(Mat resultOfCornerHarris) {
-        double max = resultOfCornerHarris.get(0, 0)[0];
-        for (int i = 0; i < resultOfCornerHarris.height(); i++) {
-            for (int j = 0; j < resultOfCornerHarris.width(); j++) {
-                if (resultOfCornerHarris.get(i, j)[0] > max) {
-                    max = resultOfCornerHarris.get(i, j)[0];
-                }
-            }
-        }
-        return 0.01 * max;
-    }
-
-    private void markCornerPointsInImageInRed(Mat image, Mat harrisImage, double threshold) {
-        double[] red = {0, 0, 255};
-        for (int i = 0; i < harrisImage.height(); i++) {
-            for (int j = 0; j < harrisImage.width(); j++) {
-                if (harrisImage.get(i, j)[0] > threshold) {
-                    image.put(i, j, red);
-                }
-            }
-        }
+        // 1% of the maximum value in the matrix
+        return Core.minMaxLoc(resultOfCornerHarris).maxVal * 0.01;
     }
 
     private List<PointCluster> findPossibleCornerPointsAndClusterizeThem(Mat image, Mat harrisImage, double threshold) {
