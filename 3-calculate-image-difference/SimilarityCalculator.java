@@ -51,21 +51,25 @@ public class SimilarityCalculator {
         return grayscaleImage;
     }
 
-    private double templateMatching(int method) {
+    private double templateMatching(int method, boolean shouldApplyCanny) {
         Mat result = new Mat();
-        Imgproc.matchTemplate(imageA, imageB, result, method);
+        if (shouldApplyCanny) {
+            Imgproc.matchTemplate(detectBordersIn(imageA), detectBordersIn(imageB), result, method);
+        } else {
+            Imgproc.matchTemplate(imageA, imageB, result, method);
+        }
         Core.MinMaxLocResult minMaxLoc = Core.minMaxLoc(result);
         return minMaxLoc.minVal;
     }
 
     // https://stackoverflow.com/questions/42292685/calculate-similarity-of-picture-and-its-sketch
-    public double templateMatchingCcoeff() {
-        return templateMatching(Imgproc.TM_CCOEFF_NORMED);
+    public double templateMatchingCcoeff(boolean shouldApplyCanny) {
+        return templateMatching(Imgproc.TM_CCOEFF_NORMED, shouldApplyCanny);
     }
 
-    public double templateMatchingSqdiff() {
+    public double templateMatchingSqdiff(boolean shouldApplyCanny) {
         // This method returns a normalized value between [-1, 0]
-        return 1 - templateMatching(Imgproc.TM_SQDIFF_NORMED);
+        return 1 - templateMatching(Imgproc.TM_SQDIFF_NORMED, shouldApplyCanny);
     }
 
     /**
@@ -132,6 +136,13 @@ public class SimilarityCalculator {
             averageDistanceOfFarthestDescriptors += matchesList.get(numberOfMatches - (i + 1)).distance;
         }
         return 1 - (averageDistanceOfFarthestDescriptors / numberOfDescriptorsToConsider) / 100;
+    }
+
+    private Mat detectBordersIn(Mat image) {
+        Mat imageWithBordersDetected = new Mat();
+        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
+        Imgproc.dilate(imageWithBordersDetected, imageWithBordersDetected, Mat.ones(3, 3, CvType.CV_32F));
+        return imageWithBordersDetected;
     }
 
 }
