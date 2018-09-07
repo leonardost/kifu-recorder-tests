@@ -305,6 +305,10 @@ public class find_circles {
         List<MatOfPoint> possibleCircles = new ArrayList<>();
         int index = 1;
         for (int i = 0; i < contours.size(); i++) {
+
+            double area = Imgproc.contourArea(contours.get(i));
+            if (area > 1500) continue;
+
             MatOfPoint2f contour2f = new MatOfPoint2f();
             MatOfPoint2f approx2f = new MatOfPoint2f();
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
@@ -312,13 +316,15 @@ public class find_circles {
             // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
             RotatedRect ellipse = Imgproc.fitEllipse(contour2f);
 
-            Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U);
-            Imgproc.drawContours(maskContour, contours, i, new Scalar(255), 2);
+            Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Imgproc.drawContours(maskContour, contours, i, new Scalar(255), -1);
+            Imgcodecs.imwrite("processing/" + filename + "_contour_" + i + ".jpg", maskContour);
 
-            Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U);
-            Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), 2);
+            Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
+            Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
             
-            Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U);
+            Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_and(maskContour, maskEllipse, intersection);
 
             System.out.println("intersection = " + intersection);
@@ -328,9 +334,14 @@ public class find_circles {
             // Count number of pixels in the drawn contour
             double n = Core.countNonZero(maskContour);
             // Compute your measure
-            double measure = (double)cnz / (double)n;
+            double measure = n / cnz;
             System.out.println("cnz = " + cnz);
             System.out.println("n = " + n);
+
+            // Imgproc.cvtColor(intersection, intersection, Imgproc.COLOR_GRAY2BGR);
+            Imgcodecs.imwrite("processing/" + filename + "_ellipse_intersection_with_contours_" + i + ".jpg", intersection);
+
+
     
             // Draw, color coded: good -> gree, bad -> red
             Imgproc.ellipse(image, ellipse, new Scalar(0, measure * 255, 255 - measure * 255), 3);
