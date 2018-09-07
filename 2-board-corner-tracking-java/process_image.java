@@ -48,7 +48,7 @@ public class process_image {
             }
 
             Mat ortogonalBoardImage = ImageUtils.generateOrtogonalBoardImage(image, possibleNewCorners);
-            Imgcodecs.imwrite("processing/ortogonal" + imageIndex + ".jpg", ortogonalBoardImage);
+            Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".jpg", ortogonalBoardImage);
             boardDetector.setImageIndex(imageIndex);
 
             System.out.println("Frame " + imageIndex);
@@ -91,6 +91,14 @@ public class process_image {
 
     private static Mat readImageFile(String inputFolder, int imageNumber) {
         return Imgcodecs.imread(inputFolder + "/frame" + imageNumber + ".jpg");
+    }
+
+    private static String padWithZeroes(int number) {
+        String paddedNumber = Integer.toString(number);
+        while (paddedNumber.length() < 3) {
+            paddedNumber = "0" + paddedNumber;
+        }
+        return paddedNumber;
     }
 
     private static void printCornerPositions(int imageIndex, Ponto[] corners) {

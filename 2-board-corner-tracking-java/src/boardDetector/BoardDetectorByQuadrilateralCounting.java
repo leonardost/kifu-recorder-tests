@@ -54,6 +54,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
         List<MatOfPoint> quadrilaterals = detectQuadrilateralsAmong(contours);
         outputImageWithQuadrilaterals(ortogonalBoardImage, quadrilaterals);
 
+        System.out.println("Average of quadrilaterals area: " + calculateAverageAreaOf(quadrilaterals));
         System.out.println("Number of quadrilaterals found: " + quadrilaterals.size());
 
         return quadrilaterals.size();
@@ -134,6 +135,14 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
             Imgproc.drawContours(imageWithQuadrilateralsDetected, contoursList, -1, BLUE, 2);
         }
         Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".jpg", imageWithQuadrilateralsDetected);
+    }
+
+    private double calculateAverageAreaOf(List<MatOfPoint> quadrilaterals) {
+        double totalArea = 0;
+        for (MatOfPoint quadrilateral : quadrilaterals) {
+            totalArea += Imgproc.contourArea(quadrilateral);
+        }
+        return totalArea / quadrilaterals.size();
     }
 
     private boolean isBoardInsideContourAccordingToQuadrilateralsDetection() {

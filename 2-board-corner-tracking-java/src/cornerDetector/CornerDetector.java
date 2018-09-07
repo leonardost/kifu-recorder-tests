@@ -168,18 +168,18 @@ public class CornerDetector {
         Mat grayscaleImage = convertImageToCorrectColorFormat(regionImage);
 
         // An image that's so blurry actually helps a lot in finding circles
-        Imgproc.medianBlur(grayscaleImage, grayscaleImage, 5);
+        Imgproc.medianBlur(grayscaleImage, grayscaleImage, 3);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_2_frame" + imageIndex + ".jpg", grayscaleImage);
         Mat circles = new Mat();
 
         // There must be only one stone in a corner, that's why this parameter is so high
-        int MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS = 10;
+        int MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS = 30;
         // Because go stones don't vary much in size, these parameters can be tweaked very nicely to find them
-        int MIN_RADIUS = 20;
+        int MIN_RADIUS = 10;
         int MAX_RADIUS = 40;
         Imgproc.HoughCircles(grayscaleImage, circles, Imgproc.HOUGH_GRADIENT, 1.0,
                 MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS,
-                100.0, 30.0, MIN_RADIUS, MAX_RADIUS);
+                50.0, 20.0, MIN_RADIUS, MAX_RADIUS);
 
         List<Ponto> possibleCenters = new ArrayList<>();
 
