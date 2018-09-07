@@ -307,7 +307,6 @@ public class find_circles {
         for (int i = 0; i < contours.size(); i++) {
 
             double area = Imgproc.contourArea(contours.get(i));
-            if (area > 1500) continue;
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
             MatOfPoint2f approx2f = new MatOfPoint2f();
@@ -327,8 +326,9 @@ public class find_circles {
             Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_and(maskContour, maskEllipse, intersection);
 
-            System.out.println("intersection = " + intersection);
-            System.out.println(intersection.size());
+            Mat sobra = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Core.bitwise_xor(maskContour, maskEllipse, sobra);
+            Imgcodecs.imwrite("processing/" + filename + "sobra_" + i + ".jpg", sobra);
 
             double cnz = Core.countNonZero(intersection);
             // Count number of pixels in the drawn contour
@@ -338,10 +338,12 @@ public class find_circles {
             System.out.println("cnz = " + cnz);
             System.out.println("n = " + n);
 
+            // O mais perto de 0, melhor
+            double proporcaoDeSobra = (double)Core.countNonZero(sobra) / (double)Core.countNonZero(maskContour);
+            if (proporcaoDeSobra > 0.5) continue;
+
             // Imgproc.cvtColor(intersection, intersection, Imgproc.COLOR_GRAY2BGR);
             Imgcodecs.imwrite("processing/" + filename + "_ellipse_intersection_with_contours_" + i + ".jpg", intersection);
-
-
     
             // Draw, color coded: good -> gree, bad -> red
             Imgproc.ellipse(image, ellipse, new Scalar(0, measure * 255, 255 - measure * 255), 3);
