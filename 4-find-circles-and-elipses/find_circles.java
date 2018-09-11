@@ -254,7 +254,6 @@ public class find_circles {
 
     private static Circle detectCircleInImageWithEllipsisFit(Mat image, String filename)
     {
-        Mat imageWithEllipsis = image.clone();
         Mat imageWithBordersDetected = detectBordersInImageWithSimpleDilation(image);
         Mat regions = new Mat();
         Core.bitwise_not(imageWithBordersDetected, regions);
@@ -269,10 +268,7 @@ public class find_circles {
 
         for (int i = 0; i < contours.size(); i++) {
 
-            double area = Imgproc.contourArea(contours.get(i));
-
             MatOfPoint2f contour2f = new MatOfPoint2f();
-            MatOfPoint2f approx2f = new MatOfPoint2f();
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
 
             // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
