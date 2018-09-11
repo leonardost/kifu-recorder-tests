@@ -28,6 +28,13 @@ public class find_circles {
 
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
 
+    public static final Scalar RED = new Scalar(0, 0, 255);
+    public static final Scalar GREEN = new Scalar(0, 255, 0);
+    public static final Scalar BLUE = new Scalar(255, 0, 0);
+    public static final Scalar PURPLE = new Scalar(255, 0, 255);
+    public static final Scalar CYAN = new Scalar(0, 255, 255);
+    public static final Scalar YELLOW = new Scalar(255, 255, 0);
+
     public static void main(String[] args) {
 
         File imageFolder = new File("images");
@@ -35,79 +42,54 @@ public class find_circles {
         Arrays.sort(imageFiles);
         List<Boolean> isThereACircle = readAnnotations();
 
-        int mostDetections = 0;
+        int counter = 0;
+        int numberOfCorrectDetections = 0;
 
-        // for (int gauss = 1; gauss <= 5; gauss += 2) { 
-        //     for (double param1 = 10.0; param1 <= 200.0; param1 += 10.0) {
-        //         for (double param2 = 10.0; param2 <= param1; param2 += 10.0) {
+        for (File imageFile : imageFiles) {
+            if (imageFile.isDirectory()) continue;
 
-                    int counter = 0;
-                    int numberOfCorrectDetections = 0;
+            Mat image = Imgcodecs.imread(imageFile.getAbsolutePath());
+            Mat imageWithCircles = image.clone();
+            System.out.println("Processing image " + imageFile.getName());
 
-                    for (File imageFile : imageFiles) {
-                        if (imageFile.isDirectory()) continue;
-            
-                        Mat image = Imgcodecs.imread(imageFile.getAbsolutePath());
-                        System.out.println("Processing image " + imageFile.getName());
-            
-                        // List<Circle> detectedCircles = detectCirclesIn(image, gauss, param1, param2);
-                        // List<Circle> detectedCircles = detectCirclesIn(image, 1, 100.0, 20.0);
-                        List<Circle> detectedCircles = detectCirclesIn(image, 3, 50.0, 20.0);
+            // These were the best parameters to find most circles with Hough circles.
+            // Another good set of values is (1, 100.0, 20.0).
+            for (Circle circle : detectCirclesIn(image, 3, 50.0, 20.0)) {
+                Imgproc.circle(imageWithCircles, circle.center, 1, RED, 3, 8, 0);
+                Imgproc.circle(imageWithCircles, circle.center, circle.radius, RED, 3, 8, 0);
+            }
 
-                        // for (Circle circle : detectedCircles) {
-                        //     Imgproc.circle(image, circle.center, 1, new Scalar(0,100,100), 3, 8, 0 );
-                        //     Imgproc.circle(image, circle.center, circle.radius, new Scalar(255,0,255), 3, 8, 0 );
-                        // }
-            
-                        // for (Circle circle : detectCirclesInImageWithBlobDetector(image)) {
-                        //     Imgproc.circle(image, circle.center, 1, new Scalar(0,100,100), 3, 8, 0 );
-                        //     Imgproc.circle(image, circle.center, circle.radius, new Scalar(255,0,255), 3, 8, 0 );
-                        // }
-            
-                        // for (Circle circle : detectCirclesInImageWithEllipsisFit(image, imageFile.getName())) {
-                        //     Imgproc.circle(image, circle.center, 1, new Scalar(0,100,100), 3, 8, 0 );
-                        //     Imgproc.circle(image, circle.center, circle.radius, new Scalar(255,0,255), 3, 8, 0 );
-                        // }
+            for (Circle circle : detectCirclesInImageWithBlobDetector(image)) {
+                Imgproc.circle(imageWithCircles, circle.center, 1, RED, 3, 8, 0);
+                Imgproc.circle(imageWithCircles, circle.center, circle.radius, BLUE, 3, 8, 0);
+            }
 
-                        // for (Circle circle : detectCirclesInImageWithApproxDP(image, imageFile.getName())) {
-                        //     Imgproc.circle(image, circle.center, 1, new Scalar(0,100,100), 3, 8, 0);
-                        //     Imgproc.circle(image, circle.center, circle.radius, new Scalar(255,0,255), 3, 8, 0);
-                        // }
+            for (Circle circle : detectCirclesInImageWithApproxDP(image, imageFile.getName())) {
+                Imgproc.circle(imageWithCircles, circle.center, 1, RED, 3, 8, 0);
+                Imgproc.circle(imageWithCircles, circle.center, circle.radius, PURPLE, 3, 8, 0);
+            }
 
-                        for (Circle circle : detectCirclesInImageByRegions(image, imageFile.getName())) {
-                            Imgproc.circle(image, circle.center, 1, new Scalar(0,100,100), 3, 8, 0);
-                            Imgproc.circle(image, circle.center, circle.radius, new Scalar(255,0,255), 3, 8, 0);
-                        }
+            Circle circle = detectCircleInImageWithEllipsisFit(image, imageFile.getName());
+            if (circle != null) {
+                Imgproc.circle(imageWithCircles, circle.center, 1, RED, 3, 8, 0);
+                Imgproc.circle(imageWithCircles, circle.center, circle.radius, GREEN, 3, 8, 0);
+            }
 
-                        Imgcodecs.imwrite("output/" + imageFile.getName(), image);
-            
-                        // System.out.println("image " + (counter + 1) + " - ");
-                        if (isThereACircle.get(counter) && !detectedCircles.isEmpty()) {
-                            // System.out.println("OK - FOUND CIRCLE WHERE THERE SHOULD BE ONE!");
-                            numberOfCorrectDetections++;
-                        } else if (!isThereACircle.get(counter) && detectedCircles.isEmpty()) {
-                            // System.out.println("OK - DID NOT FIND CIRCLE WHERE THERE SHOULD NOT BE ONE!");
-                            numberOfCorrectDetections++;
-                        } else {
-                            // System.out.println("incorrect...");
-                        }
+            Imgcodecs.imwrite("output/" + imageFile.getName(), imageWithCircles);
 
-                        counter++;
-                    }
+            // // System.out.println("image " + (counter + 1) + " - ");
+            // if (isThereACircle.get(counter) && !detectedCircles.isEmpty()) {
+            //     // System.out.println("OK - FOUND CIRCLE WHERE THERE SHOULD BE ONE!");
+            //     numberOfCorrectDetections++;
+            // } else if (!isThereACircle.get(counter) && detectedCircles.isEmpty()) {
+            //     // System.out.println("OK - DID NOT FIND CIRCLE WHERE THERE SHOULD NOT BE ONE!");
+            //     numberOfCorrectDetections++;
+            // } else {
+            //     // System.out.println("incorrect...");
+            // }
 
-        //             if (mostDetections <= numberOfCorrectDetections) {
-        //                 mostDetections = numberOfCorrectDetections;
-        //                 System.out.println("Number of correct detections = " + mostDetections);
-        //                 System.out.println("Parameters = ");
-        //                 System.out.println(gauss);
-        //                 System.out.println(param1);
-        //                 System.out.println(param2);
-        //                 System.out.println("======");
-        //             }
-
-        //         }
-        //     }
-        // }
+            counter++;
+        }
 
     }
 
@@ -134,7 +116,6 @@ public class find_circles {
 
     private static List<Circle> detectCirclesIn(Mat image, int gaussianBlur, double param1, double param2) {
         // Mat grayscaleImage = convertImageToGrayscale(image);
-
         // Imgproc.medianBlur(grayscaleImage, grayscaleImage, gaussianBlur);
         Mat imageWithBordersDetected = new Mat();
         Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
@@ -182,28 +163,10 @@ public class find_circles {
         blobsDetector.detect(grayscaleImage, keypoints);
 
         List<Circle> detectedCircles = new ArrayList<>();
-
         for (KeyPoint keypoint : keypoints.toList()) {
             detectedCircles.add(new Circle(keypoint.pt, 10));
         }
-
         return detectedCircles;
-    }
-
-    private static List<Circle> detectCirclesInImageWithEllipsisFit(Mat image, String filename)
-    {
-        Mat imageWithBordersDetected = detectBordersIn(image);
-        outputImageWithBorders(imageWithBordersDetected, filename);
-
-        List<MatOfPoint> contours = detectContoursIn(imageWithBordersDetected);
-        outputImageWithContours(image, contours, filename);
-
-        for (MatOfPoint contour : contours) {
-            double area = Imgproc.contourArea(contour);
-            // System.out.println("Contour area = " + area);
-        }
-        
-        return new ArrayList<>();
     }
 
     private static Mat detectBordersIn(Mat image) {
@@ -258,6 +221,7 @@ public class find_circles {
         Imgcodecs.imwrite("processing/" + filename + "_with_contours_detected.jpg", imageWithContoursDetected);
     }
 
+    // This method didn't work so well, approxDP transformed the circle contours into squares
     private static List<Circle> detectCirclesInImageWithApproxDP(Mat image, String filename)
     {
         Mat imageWithBordersDetected = detectBordersIn(image);
@@ -271,8 +235,6 @@ public class find_circles {
             MatOfPoint2f contour2f = new MatOfPoint2f();
             MatOfPoint2f approx2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
-            // The 0.1 means this detection is very lenient, as the goal here
-            // is to find as most squares as possible inside the image
             Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
             System.out.println("approx2f " + approx2f.size());
 
@@ -286,12 +248,13 @@ public class find_circles {
             // double contourArea = Math.abs(Imgproc.contourArea(approx2f));
         }
         outputImageWithContours(image, possibleCircles, filename);
-        
+
         return new ArrayList<>();
     }
 
-    private static List<Circle> detectCirclesInImageByRegions(Mat image, String filename)
+    private static Circle detectCircleInImageWithEllipsisFit(Mat image, String filename)
     {
+        Mat imageWithEllipsis = image.clone();
         Mat imageWithBordersDetected = detectBordersInImageWithSimpleDilation(image);
         Mat regions = new Mat();
         Core.bitwise_not(imageWithBordersDetected, regions);
@@ -299,11 +262,11 @@ public class find_circles {
 
         List<MatOfPoint> contours = detectContoursIn(regions);
         outputImageWithContours(image, contours, filename);
-        // Resultados interessantes até agora, tenho que detectar se o contorno encontrado ao redor das pedras é
-        // elipsoide para filtrá-lo
 
-        List<MatOfPoint> possibleCircles = new ArrayList<>();
-        int index = 1;
+        Circle bestCircle = null;
+        int minimumPointsFound = 999999999;
+        double threshould = 200;
+
         for (int i = 0; i < contours.size(); i++) {
 
             double area = Imgproc.contourArea(contours.get(i));
@@ -326,33 +289,21 @@ public class find_circles {
             Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_and(maskContour, maskEllipse, intersection);
 
-            Mat sobra = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-            Core.bitwise_xor(maskContour, maskEllipse, sobra);
-            Imgcodecs.imwrite("processing/" + filename + "sobra_" + i + ".jpg", sobra);
+            Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Core.bitwise_xor(maskContour, maskEllipse, leftover);
+            Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
 
-            double cnz = Core.countNonZero(intersection);
-            // Count number of pixels in the drawn contour
-            double n = Core.countNonZero(maskContour);
-            // Compute your measure
-            double measure = n / cnz;
-            System.out.println("cnz = " + cnz);
-            System.out.println("n = " + n);
+            int leftoverCount = Core.countNonZero(leftover);
+            if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
+                minimumPointsFound = leftoverCount;
+                Point center = new Point(ellipse.center.x, ellipse.center.y);
+                bestCircle = new Circle(center, (int)(ellipse.size.width) / 2);
+            }
 
-            // O mais perto de 0, melhor
-            double proporcaoDeSobra = (double)Core.countNonZero(sobra) / (double)Core.countNonZero(maskContour);
-            if (proporcaoDeSobra > 0.5) continue;
-
-            // Imgproc.cvtColor(intersection, intersection, Imgproc.COLOR_GRAY2BGR);
             Imgcodecs.imwrite("processing/" + filename + "_ellipse_intersection_with_contours_" + i + ".jpg", intersection);
-    
-            // Draw, color coded: good -> gree, bad -> red
-            Imgproc.ellipse(image, ellipse, new Scalar(0, measure * 255, 255 - measure * 255), 3);
-
-            index++;
         }
-        outputImageWithContours(image, possibleCircles, filename);
-        
-        return new ArrayList<>();
+
+        return bestCircle;
     }
 
 }

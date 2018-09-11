@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [ ! -z "processing" ]; then
+if [ ! -d "processing" ]; then
     mkdir "processing"
 fi
-if [ ! -z "output" ]; then
+if [ ! -d "output" ]; then
     mkdir "output"
 fi
 
