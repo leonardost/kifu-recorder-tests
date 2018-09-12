@@ -15,6 +15,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import src.Ponto;
 import src.PointCluster;
@@ -204,22 +205,32 @@ public class CornerDetector {
     private Ponto detectCornerByEllipsisFit(Mat image)
     {
         Mat imageWithEllipsis = image.clone();
-        Mat imageWithBordersDetected = detectBordersIn(image);
+
+        // Blur image to smooth noise
+        Mat blurredImage = image.clone();
+        Imgproc.medianBlur(blurredImage, blurredImage, 7);
+        // Detect borders
+        Mat imageWithBordersDetected = detectBordersIn(blurredImage);
+        // Invert regions
         Mat imageRegions = new Mat();
         Core.bitwise_not(imageWithBordersDetected, imageRegions);
+        // Detect contours
         List<MatOfPoint> contours = detectContoursIn(imageRegions);
+        outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
 
+        // Find contour that best fits an ellipse
         Ponto bestCornerCandidate = null;
         int minimumPointsFound = 999999999;
-        double threshould = 150;
+        double threshould = 300;
 
         for (MatOfPoint contour : contours) {
-            if (contour.rows() < 5) continue;
+
+            if (!canContourBeEllipsis(contour)) continue;
+
             MatOfPoint2f contour2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
 
             RotatedRect ellipse = Imgproc.fitEllipse(contour2f);
-            if (!isContainedInImage(ellipse)) continue;
 
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
@@ -230,12 +241,14 @@ public class CornerDetector {
 
             int leftoverCount = Core.countNonZero(leftover);
             Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
-            if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
+            // if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
+            if (leftoverCount < minimumPointsFound) {
                 minimumPointsFound = leftoverCount;
                 bestCornerCandidate = center;
-                Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0), -1);
+                Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
         }
+
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_ellipsis_fit_" + imageIndex + ".jpg", imageWithEllipsis);
 
         return bestCornerCandidate;
@@ -261,25 +274,38 @@ public class CornerDetector {
     {
         for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext();) {
             MatOfPoint contour = it.next();
-            if (Imgproc.contourArea(contour) < 450) {
+            if (Imgproc.contourArea(contour) < 200) {
                 it.remove();
             }
         }
     }
 
-    private boolean isContainedInImage(RotatedRect ellipse)
-    {
-        Point[] points = new Point[4];;
-        ellipse.points(points);
-        for (Point point : points) {
-            if (!isPointInsideImage(point)) return false;
+    private static void outputImageWithContours(Mat image, List<MatOfPoint> contours, String filename) {
+        Mat imageWithContoursDetected = image.clone();
+        Random random = new Random();
+        for (MatOfPoint contour : contours) {
+            int color1 = random.nextInt(255);
+            int color2 = random.nextInt(255);
+            int color3 = random.nextInt(255);
+            List<MatOfPoint> c = new ArrayList<>();
+            c.add(contour);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(color1, color2, color3), 2);
         }
-        return true;
+
+        Imgcodecs.imwrite(filename, imageWithContoursDetected);
     }
 
-    private boolean isPointInsideImage(Point point)
+    private boolean canContourBeEllipsis(MatOfPoint contour)
     {
-        return point.x >= 0 && point.x < 100 && point.y >= 0 && point.y < 100;
+        MatOfPoint2f contour2f = new MatOfPoint2f();
+        MatOfPoint2f approx2f = new MatOfPoint2f();
+        contour.convertTo(contour2f, CvType.CV_32FC2);
+        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
+
+        MatOfPoint approx = new MatOfPoint();
+        approx2f.convertTo(approx, CvType.CV_32S);
+
+        return Imgproc.isContourConvex(approx) && approx.rows() > 4;
     }
 
 }
