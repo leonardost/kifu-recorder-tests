@@ -208,7 +208,8 @@ public class CornerDetector {
 
         // Blur image to smooth noise
         Mat blurredImage = image.clone();
-        Imgproc.medianBlur(blurredImage, blurredImage, 7);
+        Imgproc.medianBlur(blurredImage, blurredImage, 13);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_blurred_" + imageIndex + ".jpg", blurredImage);
         // Detect borders
         Mat imageWithBordersDetected = detectBordersIn(blurredImage);
         // Invert regions
@@ -223,9 +224,13 @@ public class CornerDetector {
         int minimumPointsFound = 999999999;
         double threshould = 300;
 
+        List<MatOfPoint> approximatedContours = new ArrayList<>();
+
         for (MatOfPoint contour : contours) {
 
             if (!canContourBeEllipsis(contour)) continue;
+
+            approximatedContours.add(approximateContour(contour));
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
@@ -248,7 +253,7 @@ public class CornerDetector {
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
         }
-
+        outputImageWithContours(image, approximatedContours, "processing/corner_region_" + cornerIndex + "_approximated_contours_" + imageIndex + ".jpg");
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_ellipsis_fit_" + imageIndex + ".jpg", imageWithEllipsis);
 
         return bestCornerCandidate;
@@ -297,15 +302,19 @@ public class CornerDetector {
 
     private boolean canContourBeEllipsis(MatOfPoint contour)
     {
+        MatOfPoint approximatedContour = approximateContour(contour);
+        return Imgproc.isContourConvex(approximatedContour) && approximatedContour.rows() > 4;
+    }
+
+    private MatOfPoint approximateContour(MatOfPoint contour)
+    {
         MatOfPoint2f contour2f = new MatOfPoint2f();
         MatOfPoint2f approx2f = new MatOfPoint2f();
         contour.convertTo(contour2f, CvType.CV_32FC2);
         Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
-
         MatOfPoint approx = new MatOfPoint();
         approx2f.convertTo(approx, CvType.CV_32S);
-
-        return Imgproc.isContourConvex(approx) && approx.rows() > 4;
+        return approx;
     }
 
 }
