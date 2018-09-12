@@ -206,8 +206,8 @@ public class find_circles {
         }
     }
 
-    private static void outputImageWithContours(Mat ortogonalBoardImage, List<MatOfPoint> contours, String filename) {
-        Mat imageWithContoursDetected = ortogonalBoardImage.clone();
+    private static void outputImageWithContours(Mat image, List<MatOfPoint> contours, String filename) {
+        Mat imageWithContoursDetected = image.clone();
         Random random = new Random();
         for (MatOfPoint contour : contours) {
             int color1 = random.nextInt(255);
@@ -227,7 +227,9 @@ public class find_circles {
         Mat imageWithBordersDetected = detectBordersIn(image);
         outputImageWithBorders(imageWithBordersDetected, filename);
 
-        List<MatOfPoint> contours = detectContoursIn(imageWithBordersDetected);
+        Mat imageRegions = new Mat();
+        Core.bitwise_not(imageWithBordersDetected, imageRegions);
+        List<MatOfPoint> contours = detectContoursIn(imageRegions);
         outputImageWithContours(image, contours, filename);
         
         List<MatOfPoint> possibleCircles = new ArrayList<>();
@@ -241,13 +243,13 @@ public class find_circles {
             MatOfPoint approx = new MatOfPoint();
             approx2f.convertTo(approx, CvType.CV_32S);
 
-            if (Imgproc.isContourConvex(approx)) {
+            if (Imgproc.isContourConvex(approx) && approx.rows() > 4) {
                 possibleCircles.add(approx);
             }
 
             // double contourArea = Math.abs(Imgproc.contourArea(approx2f));
         }
-        outputImageWithContours(image, possibleCircles, filename);
+        outputImageWithContours(image, possibleCircles, filename + "ASDFASDF");
 
         return new ArrayList<>();
     }
@@ -267,6 +269,8 @@ public class find_circles {
         double threshould = 200;
 
         for (int i = 0; i < contours.size(); i++) {
+
+            if (!canContourCanBeAnEllipsis(contours.get(i))) continue;
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
@@ -300,6 +304,20 @@ public class find_circles {
         }
 
         return bestCircle;
+    }
+
+    private static boolean canContourCanBeAnEllipsis(MatOfPoint contour)
+    {
+        MatOfPoint2f contour2f = new MatOfPoint2f();
+        MatOfPoint2f approx2f = new MatOfPoint2f();
+        contour.convertTo(contour2f, CvType.CV_32FC2);
+        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
+        // System.out.println("approx2f " + approx2f.size());
+
+        MatOfPoint approx = new MatOfPoint();
+        approx2f.convertTo(approx, CvType.CV_32S);
+
+        return Imgproc.isContourConvex(approx) && approx.rows() > 5;
     }
 
 }
