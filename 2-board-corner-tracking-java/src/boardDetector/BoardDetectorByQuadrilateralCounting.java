@@ -88,7 +88,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
     private void removeSmallContours(List<MatOfPoint> contours) {
         for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext();) {
             MatOfPoint contour = it.next();
-            if (Imgproc.contourArea(contour) < 450) {
+            if (Imgproc.contourArea(contour) < 400) {
                 it.remove();
             }
         }
