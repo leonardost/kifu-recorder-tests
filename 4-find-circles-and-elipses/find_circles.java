@@ -200,7 +200,7 @@ public class find_circles {
     private static void removeSmallContours(List<MatOfPoint> contours) {
         for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext();) {
             MatOfPoint contour = it.next();
-            if (Imgproc.contourArea(contour) < 450) {
+            if (Imgproc.contourArea(contour) < 200) {
                 it.remove();
             }
         }
@@ -238,7 +238,7 @@ public class find_circles {
             MatOfPoint2f approx2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
             Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
-            System.out.println("approx2f " + approx2f.size());
+            // System.out.println("approx2f " + approx2f.size());
 
             MatOfPoint approx = new MatOfPoint();
             approx2f.convertTo(approx, CvType.CV_32S);
@@ -256,7 +256,11 @@ public class find_circles {
 
     private static Circle detectCircleInImageWithEllipsisFit(Mat image, String filename)
     {
-        Mat imageWithBordersDetected = detectBordersInImageWithSimpleDilation(image);
+        Mat blurredImage = image.clone();
+        Imgproc.medianBlur(blurredImage, blurredImage, 11);
+        Imgcodecs.imwrite("processing/" + filename + "_blurred_image.jpg", blurredImage);
+
+        Mat imageWithBordersDetected = detectBordersInImageWithSimpleDilation(blurredImage);
         Mat regions = new Mat();
         Core.bitwise_not(imageWithBordersDetected, regions);
         outputImageWithBorders(regions, filename);
@@ -284,23 +288,23 @@ public class find_circles {
 
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
-            Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
+            // Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
             
-            Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-            Core.bitwise_and(maskContour, maskEllipse, intersection);
+            // Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            // Core.bitwise_and(maskContour, maskEllipse, intersection);
+            // Imgcodecs.imwrite("processing/" + filename + "_ellipse_intersection_with_contours_" + i + ".jpg", intersection);
 
             Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_xor(maskContour, maskEllipse, leftover);
-            Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
+            // Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
 
             int leftoverCount = Core.countNonZero(leftover);
             if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
+            // if (leftoverCount < minimumPointsFound) {
                 minimumPointsFound = leftoverCount;
                 Point center = new Point(ellipse.center.x, ellipse.center.y);
                 bestCircle = new Circle(center, (int)(ellipse.size.width) / 2);
             }
-
-            Imgcodecs.imwrite("processing/" + filename + "_ellipse_intersection_with_contours_" + i + ".jpg", intersection);
         }
 
         return bestCircle;
@@ -312,12 +316,12 @@ public class find_circles {
         MatOfPoint2f approx2f = new MatOfPoint2f();
         contour.convertTo(contour2f, CvType.CV_32FC2);
         Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
-        // System.out.println("approx2f " + approx2f.size());
+        System.out.println("approx2f " + approx2f.size());
 
         MatOfPoint approx = new MatOfPoint();
         approx2f.convertTo(approx, CvType.CV_32S);
 
-        return Imgproc.isContourConvex(approx) && approx.rows() > 5;
+        return Imgproc.isContourConvex(approx) && approx.rows() > 4;
     }
 
 }
