@@ -15,7 +15,8 @@ import java.util.List;
 
 public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterface {
 
-    public static final int THRESHOULD = 15;
+    // This is the threshould of vanished quadrilaterals to consider the board was lost
+    public static final int THRESHOULD = 10;
     // This is the threshould of quadrilaterals to consider that the board was found again
     public static final int RECOVERY_THRESHOULD = 4;
     public static final Scalar RED = new Scalar(0, 0, 255);

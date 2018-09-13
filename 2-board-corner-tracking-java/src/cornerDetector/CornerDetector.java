@@ -39,18 +39,18 @@ public class CornerDetector {
         // Ponto candidateCornerCircle = detectCornerByCircleDetection(regionImage);
         Ponto candidateCornerEllipsis = detectCornerByEllipsisFit(regionImage);
 
-        Ponto pointClosestToCenterOfRegionOfInterest;
+        Ponto candidateCorner;
         if (candidateCornerEllipsis != null) {
-            pointClosestToCenterOfRegionOfInterest = candidateCornerEllipsis;
+            candidateCorner = candidateCornerEllipsis;
             System.out.println("Candidate corner found by circle detection in frame " + imageIndex + ": ");
-            System.out.println(pointClosestToCenterOfRegionOfInterest);
+            System.out.println(candidateCorner);
         } else {
-            pointClosestToCenterOfRegionOfInterest = candidateCornerHarris;
+            candidateCorner = candidateCornerHarris;
         }
 
-        if (pointClosestToCenterOfRegionOfInterest != null) {
+        if (candidateCorner != null) {
             Ponto upperLeftCornerOfRegionOfInterest = corner.add(new Ponto(-50, -50));
-            Ponto newCornerPosition = pointClosestToCenterOfRegionOfInterest.add(upperLeftCornerOfRegionOfInterest);
+            Ponto newCornerPosition = candidateCorner.add(upperLeftCornerOfRegionOfInterest);
             return newCornerPosition;
         }
 

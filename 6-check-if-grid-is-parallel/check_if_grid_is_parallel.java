@@ -62,31 +62,4 @@ public class check_if_grid_is_parallel {
 
     }
 
-    private static Mat readImageFile(String inputFolder, int imageNumber) {
-        return Imgcodecs.imread(inputFolder + "/frame" + imageNumber + ".jpg");
-    }
-
-    private static void printCornerPositions(int imageIndex, Ponto[] corners) {
-        for (int i = 0; i < 4; i++) {
-            System.out.print("Corner " + (i + 1) + ": ");
-            System.out.println(corners[i]);
-        }
-    }
-
-    private static void drawBoardContourOnImage(Mat image, Ponto[] corners, int imageIndex) {
-        Point[] boardCorners = new Point[4];
-        boardCorners[0] = new Point(corners[0].x, corners[0].y);
-        boardCorners[1] = new Point(corners[1].x, corners[1].y);
-        boardCorners[2] = new Point(corners[2].x, corners[2].y);
-        boardCorners[3] = new Point(corners[3].x, corners[3].y);
-        MatOfPoint boardContour = new MatOfPoint(boardCorners);
-
-        List<MatOfPoint> contourPoints = new ArrayList<MatOfPoint>();
-        contourPoints.add(boardContour);
-        Scalar red = new Scalar(0, 0, 255);
-        Mat imageWithContour = image.clone();
-        Imgproc.drawContours(imageWithContour, contourPoints, -1, red, 2);
-        Imgcodecs.imwrite("output/image" + imageIndex + ".jpg", imageWithContour);
-    }
-
 }
