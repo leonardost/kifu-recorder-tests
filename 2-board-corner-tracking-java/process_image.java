@@ -53,7 +53,7 @@ public class process_image {
 
             System.out.println("Frame " + imageIndex);
 
-            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            if (isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
                 for (int i = 0; i < 4; i++) {
                     corners[i] = possibleNewCorners[i];
@@ -110,6 +110,30 @@ public class process_image {
         //     System.out.print(corners[i].x + " " + corners[i].y + " ");
         // }
         // System.out.println();
+    }
+
+    private static boolean isNewContourValid(Ponto[] newCorners, Ponto[] oldCorners) {
+        int THRESHOULD = 500;
+        double[] distanceToNewPoint = new double[4];
+        for (int i = 0; i < 4; i++) {
+            distanceToNewPoint[i] = oldCorners[i].distanceTo(newCorners[i]);
+        }
+        // Checks if only one of the contour points moved. That indicates the contour found is invalid
+        for (int i = 0; i < 3; i++) {
+            if (distanceToNewPoint[i] > THRESHOULD) {
+                boolean isBiggerThanThreshould = false;
+                for (int j = i + 1; j < 4; j++) {
+                    if (distanceToNewPoint[j] > THRESHOULD) {
+                        isBiggerThanThreshould = true;
+                        break;
+                    }
+                }
+                if (!isBiggerThanThreshould) {
+                    return false;
+                }
+            }   
+        }
+        return true;
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Ponto[] corners) {

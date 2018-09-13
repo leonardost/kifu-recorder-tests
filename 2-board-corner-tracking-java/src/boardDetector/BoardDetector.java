@@ -15,7 +15,7 @@ public class BoardDetector implements BoardDetectorInterface {
         boardDetectors = new ArrayList<>();
         boardDetectors.add(new BoardDetectorByQuadrilateralCounting());
         // boardDetectors.add(new BoardDetectorByImageSimilarity());
-        boardDetectors.add(new BoardDetectorByCountingParallelLines());
+        // boardDetectors.add(new BoardDetectorByCountingParallelLines());
         setState(STATE_BOARD_IS_INSIDE);
     }
 
