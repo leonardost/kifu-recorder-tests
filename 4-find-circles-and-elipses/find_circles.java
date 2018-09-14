@@ -18,6 +18,7 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
@@ -225,12 +226,12 @@ public class find_circles {
     private static List<Circle> detectCirclesInImageWithApproxDP(Mat image, String filename)
     {
         Mat imageWithBordersDetected = detectBordersIn(image);
-        outputImageWithBorders(imageWithBordersDetected, filename);
+        // outputImageWithBorders(imageWithBordersDetected, filename);
 
         Mat imageRegions = new Mat();
         Core.bitwise_not(imageWithBordersDetected, imageRegions);
         List<MatOfPoint> contours = detectContoursIn(imageRegions);
-        outputImageWithContours(image, contours, filename);
+        // outputImageWithContours(image, contours, filename);
         
         List<MatOfPoint> possibleCircles = new ArrayList<>();
         for (MatOfPoint contour : contours) {
@@ -249,23 +250,16 @@ public class find_circles {
 
             // double contourArea = Math.abs(Imgproc.contourArea(approx2f));
         }
-        outputImageWithContours(image, possibleCircles, filename + "ASDFASDF");
+        // outputImageWithContours(image, possibleCircles, filename + "ASDFASDF");
 
         return new ArrayList<>();
     }
 
     private static Circle detectCircleInImageWithEllipsisFit(Mat image, String filename)
     {
-        Mat blurredImage = image.clone();
-        Imgproc.medianBlur(blurredImage, blurredImage, 11);
-        Imgcodecs.imwrite("processing/" + filename + "_blurred_image.jpg", blurredImage);
+        Mat preprocessedImage = preprocessImageToDetectCircles(image, filename);
 
-        Mat imageWithBordersDetected = detectBordersInImageWithSimpleDilation(blurredImage);
-        Mat regions = new Mat();
-        Core.bitwise_not(imageWithBordersDetected, regions);
-        outputImageWithBorders(regions, filename);
-
-        List<MatOfPoint> contours = detectContoursIn(regions);
+        List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, filename);
 
         Circle bestCircle = null;
@@ -308,6 +302,48 @@ public class find_circles {
         }
 
         return bestCircle;
+    }
+
+    private static Mat preprocessImageToDetectCircles(Mat image, String filename)
+    {
+        Mat preprocessedImage = image.clone();
+        
+        if (false) {
+            preprocessedImage = detectSimpleBorders(preprocessedImage);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_1.jpg", preprocessedImage);
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_2.jpg", preprocessedImage);
+            Imgproc.medianBlur(preprocessedImage, preprocessedImage, 11);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_3.jpg", preprocessedImage);
+            Core.bitwise_not(preprocessedImage, preprocessedImage);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_4.jpg", preprocessedImage);
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_5.jpg", preprocessedImage);
+        } else {
+            Imgproc.medianBlur(preprocessedImage, preprocessedImage, 11);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_1.jpg", preprocessedImage);
+            preprocessedImage = detectBordersInImageWithSimpleDilation(preprocessedImage);
+            final Size kernelSize = new Size(3, 3);
+            Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
+            Imgproc.erode(preprocessedImage, preprocessedImage, kernel, new Point(-1, -1), 1);
+            // Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_2.jpg", preprocessedImage);
+            Core.bitwise_not(preprocessedImage, preprocessedImage);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_3.jpg", preprocessedImage);
+        }
+
+        return preprocessedImage;
+    }
+
+    private static Mat detectSimpleBorders(Mat image)
+    {
+        Mat imageWithBordersDetected = new Mat();
+        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
+        return imageWithBordersDetected;
     }
 
     private static boolean canContourCanBeAnEllipsis(MatOfPoint contour)
