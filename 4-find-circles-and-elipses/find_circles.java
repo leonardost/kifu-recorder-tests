@@ -70,8 +70,7 @@ public class find_circles {
                 Imgproc.circle(imageWithCircles, circle.center, circle.radius, PURPLE, 3, 8, 0);
             }
 
-            Circle circle = detectCircleInImageWithEllipsisFit(image, imageFile.getName());
-            if (circle != null) {
+            for (Circle circle : detectCirclesInImageWithEllipsisFit(image, imageFile.getName())) {
                 Imgproc.circle(imageWithCircles, circle.center, 1, RED, 3, 8, 0);
                 Imgproc.circle(imageWithCircles, circle.center, circle.radius, GREEN, 3, 8, 0);
             }
@@ -216,7 +215,7 @@ public class find_circles {
             int color3 = random.nextInt(255);
             List<MatOfPoint> c = new ArrayList<>();
             c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(color1, color2, color3), 2);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 255), 2);
         }
 
         Imgcodecs.imwrite("processing/" + filename + "_with_contours_detected.jpg", imageWithContoursDetected);
@@ -255,7 +254,7 @@ public class find_circles {
         return new ArrayList<>();
     }
 
-    private static Circle detectCircleInImageWithEllipsisFit(Mat image, String filename)
+    private static List<Circle> detectCirclesInImageWithEllipsisFit(Mat image, String filename)
     {
         Mat preprocessedImage = preprocessImageToDetectCircles(image, filename);
 
@@ -263,12 +262,15 @@ public class find_circles {
         outputImageWithContours(image, contours, filename);
 
         Circle bestCircle = null;
-        int minimumPointsFound = 999999999;
-        double threshould = 200;
+        double minimumLeftoverRatio = 1;
+
+        List<MatOfPoint> approximatedContours = new ArrayList<>();
+        List<Circle> candidateCircles = new ArrayList<>();
 
         for (int i = 0; i < contours.size(); i++) {
 
-            if (!canContourCanBeAnEllipsis(contours.get(i))) continue;
+            if (!canContourBeAnEllipsis(contours.get(i))) continue;
+            approximatedContours.add(approximateContour(contours.get(i)));
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
@@ -282,7 +284,7 @@ public class find_circles {
 
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
-            // Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
+            Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
             
             // Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             // Core.bitwise_and(maskContour, maskEllipse, intersection);
@@ -290,46 +292,52 @@ public class find_circles {
 
             Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_xor(maskContour, maskEllipse, leftover);
-            // Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
+            Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
 
             int leftoverCount = Core.countNonZero(leftover);
-            if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
-            // if (leftoverCount < minimumPointsFound) {
-                minimumPointsFound = leftoverCount;
+            int maskEllipseCount = Core.countNonZero(maskEllipse);
+            double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
+            // if (leftoverRatio < minimumLeftoverRatio && leftoverRatio < 0.15) {
+            if (leftoverRatio < 0.15) {
+                minimumLeftoverRatio = leftoverRatio;
                 Point center = new Point(ellipse.center.x, ellipse.center.y);
                 bestCircle = new Circle(center, (int)(ellipse.size.width) / 2);
+                candidateCircles.add(bestCircle);
             }
         }
 
-        return bestCircle;
+        System.out.println("minLeftoverRatio = " + minimumLeftoverRatio);
+
+        outputImageWithContours(image, approximatedContours, filename + "_approximated_contours.jpg");
+
+        // return bestCircle;
+        return candidateCircles;
     }
 
     private static Mat preprocessImageToDetectCircles(Mat image, String filename)
     {
         Mat preprocessedImage = image.clone();
-        
-        if (false) {
+
+        if (true) {
+            Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
             preprocessedImage = detectSimpleBorders(preprocessedImage);
+            // Imgproc.medianBlur(preprocessedImage, preprocessedImage, 1);
             Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_1.jpg", preprocessedImage);
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
+            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
+            Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
             Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_2.jpg", preprocessedImage);
-            Imgproc.medianBlur(preprocessedImage, preprocessedImage, 11);
-            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_3.jpg", preprocessedImage);
             Core.bitwise_not(preprocessedImage, preprocessedImage);
-            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_4.jpg", preprocessedImage);
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
-            Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
-            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_5.jpg", preprocessedImage);
+            Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
+            // Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
+            // Imgproc.medianBlur(preprocessedImage, preprocessedImage, 11);
+            Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_3.jpg", preprocessedImage);
         } else {
-            Imgproc.medianBlur(preprocessedImage, preprocessedImage, 11);
+            Imgproc.medianBlur(preprocessedImage, preprocessedImage, 13);
             Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_1.jpg", preprocessedImage);
             preprocessedImage = detectBordersInImageWithSimpleDilation(preprocessedImage);
-            final Size kernelSize = new Size(3, 3);
-            Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
-            Imgproc.erode(preprocessedImage, preprocessedImage, kernel, new Point(-1, -1), 1);
+            Size kernelSize = new Size(3, 3);
+            Mat circularKernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
+            Imgproc.erode(preprocessedImage, preprocessedImage, circularKernel, new Point(-1, -1), 1);
             // Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F));
             Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_2.jpg", preprocessedImage);
             Core.bitwise_not(preprocessedImage, preprocessedImage);
@@ -346,18 +354,22 @@ public class find_circles {
         return imageWithBordersDetected;
     }
 
-    private static boolean canContourCanBeAnEllipsis(MatOfPoint contour)
+    private static boolean canContourBeAnEllipsis(MatOfPoint contour)
+    {
+        MatOfPoint approximatedContour = approximateContour(contour);
+        return Imgproc.isContourConvex(approximatedContour) && approximatedContour.rows() > 4;
+    }
+
+    private static MatOfPoint approximateContour(MatOfPoint contour)
     {
         MatOfPoint2f contour2f = new MatOfPoint2f();
         MatOfPoint2f approx2f = new MatOfPoint2f();
         contour.convertTo(contour2f, CvType.CV_32FC2);
-        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
-        System.out.println("approx2f " + approx2f.size());
-
+        // The lower epsilon here is, the more exact the approximation has to be
+        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.03, true);
         MatOfPoint approx = new MatOfPoint();
         approx2f.convertTo(approx, CvType.CV_32S);
-
-        return Imgproc.isContourConvex(approx) && approx.rows() > 4;
+        return approx;
     }
 
 }
