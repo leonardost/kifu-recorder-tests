@@ -9,6 +9,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -74,7 +75,7 @@ public class CornerDetector {
         resultOfCornerHarris = dilateImage(resultOfCornerHarris);
         double harrisThreshold = calculateHarrisCornerThreshold(resultOfCornerHarris);
 
-        List<PointCluster> cornerPointsClusters = findPossibleCornerPointsAndClusterizeThem(regionImage, resultOfCornerHarris, harrisThreshold);
+        List<PointCluster> cornerPointsClusters = findPossibleCornerPointsAndClusterizeThem(resultOfCornerHarris, harrisThreshold);
         List<Ponto> possibleCenters = findPossibleCenters(cornerPointsClusters);
         return getNearestPointToCenterOfRegionOfInterest(possibleCenters);
     }
@@ -109,7 +110,7 @@ public class CornerDetector {
         return Core.minMaxLoc(resultOfCornerHarris).maxVal * 0.01;
     }
 
-    private List<PointCluster> findPossibleCornerPointsAndClusterizeThem(Mat image, Mat harrisImage, double threshold) {
+    private List<PointCluster> findPossibleCornerPointsAndClusterizeThem(Mat harrisImage, double threshold) {
         List<PointCluster> pointClusters = new ArrayList<>();
 
         for (int i = 0; i < harrisImage.height(); i++) {
@@ -206,63 +207,105 @@ public class CornerDetector {
     {
         Mat imageWithEllipsis = image.clone();
 
-        // Blur image to smooth noise
-        Mat blurredImage = image.clone();
-        Imgproc.medianBlur(blurredImage, blurredImage, 13);
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_blurred_" + imageIndex + ".jpg", blurredImage);
-        // Detect borders
-        Mat imageWithBordersDetected = detectBordersIn(blurredImage);
-        // Invert regions
-        Mat imageRegions = new Mat();
-        Core.bitwise_not(imageWithBordersDetected, imageRegions);
+        // // Blur image to smooth noise
+        // Mat blurredImage = image.clone();
+        // Imgproc.medianBlur(blurredImage, blurredImage, 13);
+        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_blurred_" + imageIndex + ".jpg", blurredImage);
+        // // Detect borders
+        // Mat imageWithBordersDetected = detectBordersIn(blurredImage);
+        // // Invert regions
+        // Mat imageRegions = new Mat();
+        // Core.bitwise_not(imageWithBordersDetected, imageRegions);
+
+        Mat preprocessedImage = image.clone();
+        // Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
+        // Mat newImage = new Mat();
+        // Imgproc.Canny(preprocessedImage, newImage, 50, 100);
+        // Imgproc.dilate(newImage, newImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
+        // Core.bitwise_not(newImage, newImage);
+
+        // Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
+        // Mat newImage = new Mat();
+        // Imgproc.Canny(preprocessedImage, newImage, 50, 100);
+        // Imgproc.dilate(newImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
+        // Core.bitwise_not(preprocessedImage, preprocessedImage);
+        // Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 2);
+
+        Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
+        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_0.jpg", preprocessedImage);
+        preprocessedImage = detectSimpleBorders(preprocessedImage);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_1.jpg", preprocessedImage);
+        Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
+        Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_2.jpg", preprocessedImage);
+        Core.bitwise_not(preprocessedImage, preprocessedImage);
+        Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
+        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_3.jpg", preprocessedImage);
+
         // Detect contours
-        List<MatOfPoint> contours = detectContoursIn(imageRegions);
+        List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
 
         // Find contour that best fits an ellipse
         Ponto bestCornerCandidate = null;
-        int minimumPointsFound = 999999999;
+        double minimumLeftoverRatio = 1;
         double threshould = 300;
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
+        List<Ponto> candidatePoints = new ArrayList<>();
 
-        for (MatOfPoint contour : contours) {
+        for (int i = 0; i < contours.size(); i++) {
 
-            if (!canContourBeEllipsis(contour)) continue;
+            if (!canContourBeAnEllipsis(contours.get(i))) continue;
+            approximatedContours.add(approximateContour(contours.get(i)));
 
-            approximatedContours.add(approximateContour(contour));
+            if (contours.get(i).rows() < 5) continue;
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
-            contour.convertTo(contour2f, CvType.CV_32FC2);
+            contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
 
             RotatedRect ellipse = Imgproc.fitEllipse(contour2f);
 
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Imgproc.drawContours(maskContour, contours, i, new Scalar(255), -1);
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
+            Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
             Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             // The leftover is the difference between the contour found and the ellipse we're trying to fit.
             // The less leftover there is, the more the ellipse fits the contour.
             Core.bitwise_xor(maskContour, maskEllipse, leftover);
 
             int leftoverCount = Core.countNonZero(leftover);
+            int maskEllipseCount = Core.countNonZero(maskEllipse);
+            double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
+
             Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
-            // if (leftoverCount < minimumPointsFound && leftoverCount < threshould) {
-            if (leftoverCount < minimumPointsFound) {
-                minimumPointsFound = leftoverCount;
+            // if (leftoverRatio < minimumLeftoverRatio && leftoverRatio < 0.15) {
+            if (leftoverRatio < 0.15) {
+                minimumLeftoverRatio = leftoverRatio;
                 bestCornerCandidate = center;
+                candidatePoints.add(bestCornerCandidate);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
         }
         outputImageWithContours(image, approximatedContours, "processing/corner_region_" + cornerIndex + "_approximated_contours_" + imageIndex + ".jpg");
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_ellipsis_fit_" + imageIndex + ".jpg", imageWithEllipsis);
 
-        return bestCornerCandidate;
+        // return bestCornerCandidate;
+        return getNearestPointToCenterOfRegionOfInterest(candidatePoints);
     }
 
     private Mat detectBordersIn(Mat image) {
         Mat imageWithBordersDetected = new Mat();
         Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
         Imgproc.dilate(imageWithBordersDetected, imageWithBordersDetected, Mat.ones(3, 3, CvType.CV_32F));
+        return imageWithBordersDetected;
+    }
+
+    private Mat detectSimpleBorders(Mat image)
+    {
+        Mat imageWithBordersDetected = new Mat();
+        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
         return imageWithBordersDetected;
     }
 
@@ -294,13 +337,13 @@ public class CornerDetector {
             int color3 = random.nextInt(255);
             List<MatOfPoint> c = new ArrayList<>();
             c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(color1, color2, color3), 2);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 255), 2);
         }
 
         Imgcodecs.imwrite(filename, imageWithContoursDetected);
     }
 
-    private boolean canContourBeEllipsis(MatOfPoint contour)
+    private boolean canContourBeAnEllipsis(MatOfPoint contour)
     {
         MatOfPoint approximatedContour = approximateContour(contour);
         return Imgproc.isContourConvex(approximatedContour) && approximatedContour.rows() > 4;
@@ -311,7 +354,8 @@ public class CornerDetector {
         MatOfPoint2f contour2f = new MatOfPoint2f();
         MatOfPoint2f approx2f = new MatOfPoint2f();
         contour.convertTo(contour2f, CvType.CV_32FC2);
-        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.04, true);
+        // The lower epsilon here is, the more exact the approximation has to be
+        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.03, true);
         MatOfPoint approx = new MatOfPoint();
         approx2f.convertTo(approx, CvType.CV_32S);
         return approx;

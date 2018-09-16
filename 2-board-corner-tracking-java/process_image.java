@@ -53,7 +53,8 @@ public class process_image {
 
             System.out.println("Frame " + imageIndex);
 
-            if (isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            // if (isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
                 for (int i = 0; i < 4; i++) {
                     corners[i] = possibleNewCorners[i];
@@ -62,8 +63,8 @@ public class process_image {
                 System.out.println("Board is NOT inside countour");
             }
 
-            // printCornerPositions(imageIndex, corners);
-            printDetectionError(cornerPositionsFile, imageIndex, corners);
+            printCornerPositions(imageIndex, corners);
+            // printDetectionError(cornerPositionsFile, imageIndex, corners);
             drawBoardContourOnImage(image, corners, imageIndex);
 
             System.out.println();
