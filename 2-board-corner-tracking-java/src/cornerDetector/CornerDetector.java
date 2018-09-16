@@ -213,10 +213,10 @@ public class CornerDetector {
         Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
         // Detect borders
         preprocessedImage = detectSimpleBorders(preprocessedImage);
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_1.jpg", preprocessedImage);
+        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_1.jpg", preprocessedImage);
         Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
         Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_2.jpg", preprocessedImage);
+        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_2.jpg", preprocessedImage);
         // Invert regions
         Core.bitwise_not(preprocessedImage, preprocessedImage);
         Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
@@ -226,8 +226,6 @@ public class CornerDetector {
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
 
-        // Find contour that best fits an ellipse
-        Ponto bestCornerCandidate = null;
         double minimumLeftoverRatio = 1;
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
@@ -244,6 +242,8 @@ public class CornerDetector {
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
 
             RotatedRect ellipse = Imgproc.fitEllipse(contour2f);
+            Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
+            if (!isInsideRegionOfInterest(center)) continue;
 
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.drawContours(maskContour, contours, i, new Scalar(255), -1);
@@ -258,19 +258,15 @@ public class CornerDetector {
             int maskEllipseCount = Core.countNonZero(maskEllipse);
             double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
 
-            Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
-            // if (leftoverRatio < minimumLeftoverRatio && leftoverRatio < 0.15) {
             if (leftoverRatio < 0.15) {
                 minimumLeftoverRatio = leftoverRatio;
-                bestCornerCandidate = center;
-                candidatePoints.add(bestCornerCandidate);
+                candidatePoints.add(center);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
         }
         outputImageWithContours(image, approximatedContours, "processing/corner_region_" + cornerIndex + "_approximated_contours_" + imageIndex + ".jpg");
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_ellipsis_fit_" + imageIndex + ".jpg", imageWithEllipsis);
 
-        // return bestCornerCandidate;
         return getNearestPointToCenterOfRegionOfInterest(candidatePoints);
     }
 
@@ -284,7 +280,7 @@ public class CornerDetector {
     private Mat detectSimpleBorders(Mat image)
     {
         Mat imageWithBordersDetected = new Mat();
-        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
+        Imgproc.Canny(image, imageWithBordersDetected, 50, 150);
         return imageWithBordersDetected;
     }
 
@@ -305,6 +301,12 @@ public class CornerDetector {
                 it.remove();
             }
         }
+    }
+
+    private static boolean isInsideRegionOfInterest(Ponto point)
+    {
+        return point.x >= 0 && point.x < RADIUS_OF_REGION_OF_INTEREST * 2
+            && point.y >= 0 && point.y < RADIUS_OF_REGION_OF_INTEREST * 2;
     }
 
     private static void outputImageWithContours(Mat image, List<MatOfPoint> contours, String filename) {
