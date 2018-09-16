@@ -19,6 +19,7 @@ import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.core.TermCriteria;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
@@ -280,11 +281,11 @@ public class find_circles {
 
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.drawContours(maskContour, contours, i, new Scalar(255), -1);
-            Imgcodecs.imwrite("processing/" + filename + "_contour_" + i + ".jpg", maskContour);
+            // Imgcodecs.imwrite("processing/" + filename + "_contour_" + i + ".jpg", maskContour);
 
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
-            Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
+            // Imgcodecs.imwrite("processing/" + filename + "_ellipse_" + i + ".jpg", maskEllipse);
             
             // Mat intersection = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             // Core.bitwise_and(maskContour, maskEllipse, intersection);
@@ -292,7 +293,7 @@ public class find_circles {
 
             Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Core.bitwise_xor(maskContour, maskEllipse, leftover);
-            Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
+            // Imgcodecs.imwrite("processing/" + filename + "_leftover_" + i + ".jpg", leftover);
 
             int leftoverCount = Core.countNonZero(leftover);
             int maskEllipseCount = Core.countNonZero(maskEllipse);
@@ -320,8 +321,8 @@ public class find_circles {
 
         if (true) {
             Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
+            // preprocessedImage = applyColorQuantizationTo(preprocessedImage, filename);
             preprocessedImage = detectSimpleBorders(preprocessedImage);
-            // Imgproc.medianBlur(preprocessedImage, preprocessedImage, 1);
             Imgcodecs.imwrite("processing/" + filename + "_preprocessed_image_1.jpg", preprocessedImage);
             Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
             Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
@@ -347,10 +348,50 @@ public class find_circles {
         return preprocessedImage;
     }
 
+    // Reduce the number of colors in the image to smooth out noise
+    // Uses k-means clustering
+    // This did not seem to improve the detection of circles...
+    private static Mat applyColorQuantizationTo(Mat image, String filename)
+    {
+        int numberOfClusters = 8;
+		Mat samples = image.reshape(1, image.cols() * image.rows());
+		Mat samples32f = new Mat();
+		samples.convertTo(samples32f, CvType.CV_32F, 1.0 / 255.0);
+
+		Mat labels = new Mat();
+		TermCriteria criteria = new TermCriteria(TermCriteria.COUNT, 100, 1);
+		Mat centers = new Mat();
+        Core.kmeans(samples32f, numberOfClusters, labels, criteria, 1, Core.KMEANS_PP_CENTERS, centers);		
+        // System.out.println(image);
+        // labels are the centroids indexes
+        // System.out.println(labels);
+        // centers contains the cnetroids of the k-means clustering
+        // System.out.println(centers);
+        // System.out.println(centers.dump());
+
+        // centers.convertTo(centers, CvType.CV_8UC1, 255.0);
+        // centers = centers.reshape(3);
+        // System.out.println(centers);
+
+        Mat colorQuantizedImage = new Mat(image.rows(), image.cols(), CvType.CV_8UC3);
+        for (int i = 0; i < image.rows(); i++) {
+            for (int j = 0; j < image.cols(); j++) {
+                int label = (int)labels.get(i * 100 + j, 0)[0];
+                byte[] color = new byte[3];
+                color[2] = (byte)(centers.get(label, 2)[0] * 255);
+                color[1] = (byte)(centers.get(label, 1)[0] * 255);
+                color[0] = (byte)(centers.get(label, 0)[0] * 255);
+                colorQuantizedImage.put(i, j, color);
+            }
+        }
+        Imgcodecs.imwrite("processing/" + filename + "_color_quantization.jpg", colorQuantizedImage);
+        return colorQuantizedImage;
+    }
+
     private static Mat detectSimpleBorders(Mat image)
     {
         Mat imageWithBordersDetected = new Mat();
-        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
+        Imgproc.Canny(image, imageWithBordersDetected, 50, 150);
         return imageWithBordersDetected;
     }
 
@@ -371,5 +412,7 @@ public class find_circles {
         approx2f.convertTo(approx, CvType.CV_32S);
         return approx;
     }
+
+
 
 }
