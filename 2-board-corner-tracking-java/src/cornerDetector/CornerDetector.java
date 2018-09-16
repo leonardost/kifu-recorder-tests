@@ -207,37 +207,17 @@ public class CornerDetector {
     {
         Mat imageWithEllipsis = image.clone();
 
-        // // Blur image to smooth noise
-        // Mat blurredImage = image.clone();
-        // Imgproc.medianBlur(blurredImage, blurredImage, 13);
-        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_blurred_" + imageIndex + ".jpg", blurredImage);
-        // // Detect borders
-        // Mat imageWithBordersDetected = detectBordersIn(blurredImage);
-        // // Invert regions
-        // Mat imageRegions = new Mat();
-        // Core.bitwise_not(imageWithBordersDetected, imageRegions);
-
         Mat preprocessedImage = image.clone();
-        // Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
-        // Mat newImage = new Mat();
-        // Imgproc.Canny(preprocessedImage, newImage, 50, 100);
-        // Imgproc.dilate(newImage, newImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        // Core.bitwise_not(newImage, newImage);
 
-        // Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
-        // Mat newImage = new Mat();
-        // Imgproc.Canny(preprocessedImage, newImage, 50, 100);
-        // Imgproc.dilate(newImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        // Core.bitwise_not(preprocessedImage, preprocessedImage);
-        // Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 2);
-
+        // Blur image to smooth noise
         Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
-        // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_0.jpg", preprocessedImage);
+        // Detect borders
         preprocessedImage = detectSimpleBorders(preprocessedImage);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_1.jpg", preprocessedImage);
         Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
         Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_2.jpg", preprocessedImage);
+        // Invert regions
         Core.bitwise_not(preprocessedImage, preprocessedImage);
         Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_3.jpg", preprocessedImage);
@@ -249,7 +229,6 @@ public class CornerDetector {
         // Find contour that best fits an ellipse
         Ponto bestCornerCandidate = null;
         double minimumLeftoverRatio = 1;
-        double threshould = 300;
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
         List<Ponto> candidatePoints = new ArrayList<>();
