@@ -115,6 +115,7 @@ public class find_circles {
         return new ArrayList<>();
     }
 
+    // https://docs.opencv.org/3.3.1/d4/d70/tutorial_hough_circle.html
     private static List<Circle> detectCirclesIn(Mat image, int gaussianBlur, double param1, double param2) {
         // Mat grayscaleImage = convertImageToGrayscale(image);
         // Imgproc.medianBlur(grayscaleImage, grayscaleImage, gaussianBlur);
@@ -302,8 +303,10 @@ public class find_circles {
             if (leftoverRatio < 0.15) {
                 minimumLeftoverRatio = leftoverRatio;
                 Point center = new Point(ellipse.center.x, ellipse.center.y);
-                bestCircle = new Circle(center, (int)(ellipse.size.width) / 2);
-                candidateCircles.add(bestCircle);
+                if (center.x >= 0 && center.x < 100 && center.y >= 0 && center.y < 100) {
+                    bestCircle = new Circle(center, (int)(ellipse.size.width) / 2);
+                    candidateCircles.add(bestCircle);
+                }
             }
         }
 
