@@ -107,10 +107,6 @@ public class process_image {
             System.out.print("Corner " + (i + 1) + ": ");
             System.out.println(corners[i]);
         }
-        // for (int i = 0; i < 4; i++) {
-        //     System.out.print(corners[i].x + " " + corners[i].y + " ");
-        // }
-        // System.out.println();
     }
 
     private static boolean isNewContourValid(Ponto[] newCorners, Ponto[] oldCorners) {

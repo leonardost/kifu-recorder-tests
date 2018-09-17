@@ -37,7 +37,6 @@ public class CornerDetector {
         Ponto candidateCornerHarris = detectCornerByHarrisDetection(regionImage);
         // This should have precedence over the Harris Corner detector because a circle
         // in a corner position is great indicative that it is indeed the corner
-        // Ponto candidateCornerCircle = detectCornerByCircleDetection(regionImage);
         Ponto candidateCornerEllipsis = detectCornerByEllipsisFit(regionImage);
 
         Ponto candidateCorner;
@@ -165,54 +164,16 @@ public class CornerDetector {
         return nearestPoint;
     }
 
-    // https://docs.opencv.org/3.3.1/d4/d70/tutorial_hough_circle.html
-    private Ponto detectCornerByCircleDetection(Mat regionImage) {
-        Mat grayscaleImage = convertImageToCorrectColorFormat(regionImage);
-
-        // An image that's so blurry actually helps a lot in finding circles
-        Imgproc.medianBlur(grayscaleImage, grayscaleImage, 3);
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_2_frame" + imageIndex + ".jpg", grayscaleImage);
-        Mat circles = new Mat();
-
-        // There must be only one stone in a corner, that's why this parameter is so high
-        int MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS = 30;
-        // Because go stones don't vary much in size, these parameters can be tweaked very nicely to find them
-        int MIN_RADIUS = 10;
-        int MAX_RADIUS = 40;
-        Imgproc.HoughCircles(grayscaleImage, circles, Imgproc.HOUGH_GRADIENT, 1.0,
-                MIN_DISTANCE_BETWEEN_CIRCLE_CENTERS,
-                50.0, 20.0, MIN_RADIUS, MAX_RADIUS);
-
-        List<Ponto> possibleCenters = new ArrayList<>();
-
-        Mat showCircleDetectionImage = regionImage.clone();
-        for (int x = 0; x < circles.cols(); x++) {
-            double[] c = circles.get(0, x);
-            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-            // circle center
-            Imgproc.circle(showCircleDetectionImage, center, 1, new Scalar(0,100,100), 3, 8, 0 );
-            // circle outline
-            int radius = (int) Math.round(c[2]);
-            Imgproc.circle(showCircleDetectionImage, center, radius, new Scalar(255,0,255), 3, 8, 0 );
-
-            possibleCenters.add(new Ponto((int)Math.round(c[0]), (int)Math.round(c[1])));
-        }
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_circle_detection_step_3_frame" + imageIndex + ".jpg", showCircleDetectionImage);
-
-        return getNearestPointToCenterOfRegionOfInterest(possibleCenters);
-    }
-
     // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
     private Ponto detectCornerByEllipsisFit(Mat image)
     {
         Mat imageWithEllipsis = image.clone();
-
         Mat preprocessedImage = image.clone();
 
         // Blur image to smooth noise
         Imgproc.blur(preprocessedImage, preprocessedImage, new Size(3, 3));
         // Detect borders
-        preprocessedImage = detectSimpleBorders(preprocessedImage);
+        preprocessedImage = detectBordersIn(preprocessedImage);
         // Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_preprocessed_image_1.jpg", preprocessedImage);
         Imgproc.dilate(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
         Imgproc.erode(preprocessedImage, preprocessedImage, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
@@ -226,8 +187,6 @@ public class CornerDetector {
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
 
-        double minimumLeftoverRatio = 1;
-
         List<MatOfPoint> approximatedContours = new ArrayList<>();
         List<Ponto> candidatePoints = new ArrayList<>();
 
@@ -235,8 +194,6 @@ public class CornerDetector {
 
             if (!canContourBeAnEllipsis(contours.get(i))) continue;
             approximatedContours.add(approximateContour(contours.get(i)));
-
-            if (contours.get(i).rows() < 5) continue;
 
             MatOfPoint2f contour2f = new MatOfPoint2f();
             contours.get(i).convertTo(contour2f, CvType.CV_32FC2);
@@ -259,7 +216,6 @@ public class CornerDetector {
             double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
 
             if (leftoverRatio < 0.15) {
-                minimumLeftoverRatio = leftoverRatio;
                 candidatePoints.add(center);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
@@ -270,14 +226,7 @@ public class CornerDetector {
         return getNearestPointToCenterOfRegionOfInterest(candidatePoints);
     }
 
-    private Mat detectBordersIn(Mat image) {
-        Mat imageWithBordersDetected = new Mat();
-        Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
-        Imgproc.dilate(imageWithBordersDetected, imageWithBordersDetected, Mat.ones(3, 3, CvType.CV_32F));
-        return imageWithBordersDetected;
-    }
-
-    private Mat detectSimpleBorders(Mat image)
+    private Mat detectBordersIn(Mat image)
     {
         Mat imageWithBordersDetected = new Mat();
         Imgproc.Canny(image, imageWithBordersDetected, 50, 150);
@@ -318,7 +267,7 @@ public class CornerDetector {
             int color3 = random.nextInt(255);
             List<MatOfPoint> c = new ArrayList<>();
             c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 255), 2);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(color1, color2, color3), 2);
         }
 
         Imgcodecs.imwrite(filename, imageWithContoursDetected);
@@ -335,7 +284,7 @@ public class CornerDetector {
         MatOfPoint2f contour2f = new MatOfPoint2f();
         MatOfPoint2f approx2f = new MatOfPoint2f();
         contour.convertTo(contour2f, CvType.CV_32FC2);
-        // The lower epsilon here is, the more exact the approximation has to be
+        // The lower epsilon is, the more exact the approximation has to be
         Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.03, true);
         MatOfPoint approx = new MatOfPoint();
         approx2f.convertTo(approx, CvType.CV_32S);
@@ -343,4 +292,3 @@ public class CornerDetector {
     }
 
 }
-
