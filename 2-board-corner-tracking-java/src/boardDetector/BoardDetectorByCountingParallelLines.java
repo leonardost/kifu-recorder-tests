@@ -32,9 +32,8 @@ public class BoardDetectorByCountingParallelLines implements BoardDetectorInterf
 
     public boolean isBoardContainedIn(Mat ortogonalBoardImage) {
         if (lastNumberOfParallelLinesWhenBoardWasInside == -1) return true;
-
         lastNumberOfParallelLines = parallelChecker.getNumberOfParallelLinesIn(ortogonalBoardImage);
-
+        System.out.println("Number of parallel lines = " + lastNumberOfParallelLines);
         return lastNumberOfParallelLinesWhenBoardWasInside - lastNumberOfParallelLines < 3;
     }
 
