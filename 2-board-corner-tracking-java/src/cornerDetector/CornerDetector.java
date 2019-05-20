@@ -40,7 +40,7 @@ public class CornerDetector {
 
         // If too many Harris corner candidates were found, this probably means the image contains
         // something other than Go stones. Maybe a player's hand or something else.
-        if (candidateCornerHarris.size() > 5) return null;
+        // if (candidateCornerHarris.size() > 5) return null;
 
         Mat imageWithCornersPlotted = regionImage.clone();
 

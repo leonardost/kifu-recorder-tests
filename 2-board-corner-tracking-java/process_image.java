@@ -32,6 +32,8 @@ public class process_image {
 
         int numberOfImages = cornerPositionsFile.getNumberOfImages();
         Ponto[] corners = cornerPositionsFile.getInitialCornersPositions();
+        Ponto[] cornersVerification = corners.clone();
+        int[] numberOfFramesWithouModification = { 0, 0, 0, 0 };
 
         CornerDetector cornerDetector = new CornerDetector();
         BoardDetector boardDetector = new BoardDetector();
@@ -43,18 +45,34 @@ public class process_image {
             cornerDetector.imageIndex = imageIndex;
 
             Ponto[] possibleNewCorners = new Ponto[4];
+            boolean wereAllCornersFound = true;
             for (int i = 0; i < 4; i++) {
                 possibleNewCorners[i] = cornerDetector.updateCorner(image, corners[i], i + 1);
+                if (possibleNewCorners[i] == null) {
+                    wereAllCornersFound = false;
+                } else {
+                    numberOfFramesWithouModification[i] = possibleNewCorners[i].distanceTo(corners[i]) < 300 ?
+                        numberOfFramesWithouModification[i] + 1 : 0;
+                }
             }
 
-            Mat ortogonalBoardImage = ImageUtils.generateOrtogonalBoardImage(image, possibleNewCorners);
+            Mat ortogonalBoardImage = ImageUtils.generateOrtogonalBoardImage(image, wereAllCornersFound ? possibleNewCorners : corners);
             Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".jpg", ortogonalBoardImage);
             boardDetector.setImageIndex(imageIndex);
 
             System.out.println("Frame " + imageIndex);
 
-            // if (isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
-            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            // for (int i = 0; i < 4; i++) {
+            //     if (numberOfFramesWithouModification[i] > 1) {
+            //         System.out.println("Updating corner " + (i + 1));
+            //         corners[i] = possibleNewCorners[i];
+            //         numberOfFramesWithouModification[i] = 0;
+            //     }
+            // }
+
+            if (wereAllCornersFound && isCornerMovementUniform(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            // if (wereAllCornersFound && isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            // if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
                 for (int i = 0; i < 4; i++) {
                     corners[i] = possibleNewCorners[i];
@@ -109,28 +127,46 @@ public class process_image {
         }
     }
 
+    // Checks if the newly found corners are at an uniform distnace from the old ones
     private static boolean isNewContourValid(Ponto[] newCorners, Ponto[] oldCorners) {
-        int THRESHOULD = 500;
+        int THRESHOULD = 300;
+        double[] distanceToNewPoint = new double[4];
+        int numberOfPointsThatMovedMoreThanThreshould = 0;
+        for (int i = 0; i < 4; i++) {
+            distanceToNewPoint[i] = oldCorners[i].distanceTo(newCorners[i]);
+            System.out.println("Distance to old corner point " + (i + 1) + " = " + distanceToNewPoint[i]);
+            if (distanceToNewPoint[i] > THRESHOULD) {
+                numberOfPointsThatMovedMoreThanThreshould++;
+            }
+        }
+        return numberOfPointsThatMovedMoreThanThreshould == 0
+            || numberOfPointsThatMovedMoreThanThreshould == 4;
+    }
+
+    // Checks if the distance of the old corners to the new corners is uniform
+    // There's no situation where only one corner of the board changes location
+    private static boolean isCornerMovementUniform(Ponto[] newCorners, Ponto[] oldCorners) {
         double[] distanceToNewPoint = new double[4];
         for (int i = 0; i < 4; i++) {
             distanceToNewPoint[i] = oldCorners[i].distanceTo(newCorners[i]);
+            System.out.println("Distance to old corner point " + (i + 1) + " = " + distanceToNewPoint[i]);
         }
-        // Checks if only one of the contour points moved. That indicates the contour found is invalid
-        for (int i = 0; i < 3; i++) {
-            if (distanceToNewPoint[i] > THRESHOULD) {
-                boolean isBiggerThanThreshould = false;
-                for (int j = i + 1; j < 4; j++) {
-                    if (distanceToNewPoint[j] > THRESHOULD) {
-                        isBiggerThanThreshould = true;
-                        break;
-                    }
-                }
-                if (!isBiggerThanThreshould) {
-                    return false;
-                }
-            }   
+        double standardDeviationOfDistances = calculateStandardDeviationOf(distanceToNewPoint);
+        System.out.println("Standard deviation of distances = " + standardDeviationOfDistances);
+        return standardDeviationOfDistances <= 100;
+    }
+
+    private static double calculateStandardDeviationOf(double[] distribution) {
+        double sum = 0;
+        for (int i = 0; i < distribution.length; i++) {
+            sum += distribution[i];
         }
-        return true;
+        double mean = sum / distribution.length;
+        double sumOfDistancesToMean = 0;
+        for (int i = 0; i < distribution.length; i++) {
+            sumOfDistancesToMean += Math.pow((distribution[i] - mean), 2);
+        }
+        return Math.sqrt(sumOfDistancesToMean / distribution.length);
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Ponto[] corners) {
