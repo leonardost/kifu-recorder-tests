@@ -1,6 +1,8 @@
 package src.stoneDetector;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 
 import src.models.Board;
 import src.models.Move;
@@ -12,17 +14,9 @@ import java.util.List;
 public class StoneDetector implements StoneDetectorInterface {
 
     private int imageIndex;
-    private List<StoneDetectorInterface> stoneDetectors;
-
-    public StoneDetector() {
-        stoneDetectors = new ArrayList<>();
-    }
 
     public void setImageIndex(int imageIndex) {
         this.imageIndex = imageIndex;
-        for (StoneDetectorInterface boardDetector : stoneDetectors) {
-            boardDetector.setImageIndex(imageIndex);
-        }
     }
 
     // Imagem ortogonal e quadrada do board
@@ -359,8 +353,8 @@ public class StoneDetector implements StoneDetectorInterface {
     }
 
     private double calculateVarianceOf(double color[]) {
-        double media = (color[0] + color[1] + color[2]) / 3;
-        double differences[] = {color[0] - media, color[1] - media, color[2] - media};
+        double average = (color[0] + color[1] + color[2]) / 3;
+        double differences[] = {color[0] - average, color[1] - average, color[2] - average};
         return (differences[0] * differences[0] +
                 differences[1] * differences[1] +
                 differences[2] * differences[2]) / 3;
@@ -376,7 +370,7 @@ public class StoneDetector implements StoneDetectorInterface {
     }
 
     /**
-     * Recupera a cor media ao redor de uma posiçao na imagem
+     * Recupera a cor average ao redor de uma posiçao na imagem
      *
      * @param y
      * @param x
@@ -418,7 +412,10 @@ public class StoneDetector implements StoneDetectorInterface {
         Scalar scalarAverage = Core.mean(roi);
 
         double[] averageColor = new double[boardImage.channels()];
-        for (int i = 0; i < scalarAverage.val.length; ++i) {
+        // System.out.println(">>>>> " + boardImage.channels());
+        // System.out.println(">>>>> " + scalarAverage.val.length);
+        // for (int i = 0; i < scalarAverage.val.length; ++i) {
+        for (int i = 0; i < boardImage.channels(); ++i) {
             averageColor[i] = scalarAverage.val[i];
         }
 
@@ -474,7 +471,7 @@ public class StoneDetector implements StoneDetectorInterface {
     }
 
     /**
-     * Retorna a cor media do board.
+     * Retorna a cor average do board.
      * 
      * ESTA COR MUDA CONFORME O JOGO PROGRIDE E CONFORME A ILUMINAÇÃO MUDA.
      *
@@ -484,20 +481,12 @@ public class StoneDetector implements StoneDetectorInterface {
     private double[] averageColorDoBoard(Mat boardImage) {
         Scalar scalarAverage = Core.mean(boardImage);
 
-        double[] media = new double[boardImage.channels()];
+        double[] average = new double[boardImage.channels()];
         for (int i = 0; i < scalarAverage.val.length; ++i) {
-            media[i] = scalarAverage.val[i];
+            average[i] = scalarAverage.val[i];
         }
 
-        return media;
+        return average;
     }
-
-
-
-
-
-
-
-
 
 }
