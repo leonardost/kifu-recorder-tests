@@ -27,16 +27,18 @@ public class CornerDetector {
     public int imageIndex;
     private int cornerIndex;
 
-    public Ponto updateCorner(Mat image, Ponto corner, int cornerIndex) {
-
+    public void setCornerIndex(int cornerIndex) {
         this.cornerIndex = cornerIndex;
+    }
+
+    public Corner findNewCornerAround(Corner corner, Mat image) {
 
         Mat regionImage = getRegionOfInterestAround(corner, image);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
 
-        List<Ponto> candidateCorners = new ArrayList<>();
-        List<Ponto> candidateCornerHarris = detectCandidateCornersByHarrisDetection(regionImage);
-        List<Ponto> candidateCornerEllipsis = detectCandidateCornersByEllipsisFit(regionImage);
+        List<Corner> candidateCorners = new ArrayList<>();
+        List<Corner> candidateCornerHarris = detectCandidateCornersByHarrisDetection(regionImage);
+        List<Corner> candidateCornerEllipsis = detectCandidateCornersByEllipsisFit(regionImage);
 
         // If too many Harris corner candidates were found, this probably means the image contains
         // something other than Go stones. Maybe a player's hand or something else.
@@ -48,49 +50,47 @@ public class CornerDetector {
 
         // Remove Harris corner candidates that are too close to circle corner candidates
         // This is done to try to remove corner candidates that appear on the edge of circles
-        for (Iterator<Ponto> it = candidateCornerHarris.iterator(); it.hasNext();) {
-            Ponto point = it.next();
-            for (Ponto circlePoint : candidateCornerEllipsis) {
-                if (point.distanceTo(circlePoint) <= 25 * 25) {
+        for (Iterator<Corner> it = candidateCornerHarris.iterator(); it.hasNext();) {
+            Corner point = it.next();
+            for (Corner circlePoint : candidateCornerEllipsis) {
+                if (point.position.distanceTo(circlePoint.position) <= 25 * 25) {
                     it.remove();
                     break;
                 }
             }
         }
 
-        // if (candidateCornerEllipsis != null) {
-        for (Ponto point : candidateCornerEllipsis) {
+        for (Corner point : candidateCornerEllipsis) {
             System.out.println("Candidate corner found by circle detection in frame " + imageIndex + ": ");
-            System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.x, point.y), 3, new Scalar(0, 255, 0), -1);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.x, point.y), 25, new Scalar(0, 255, 0), 1);
+            System.out.println(point.position);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 3, new Scalar(0, 255, 0), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 25, new Scalar(0, 255, 0), 1);
         }
 
-        // if (candidateCornerHarris != null) {
-        for (Ponto point : candidateCornerHarris) {
+        for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
-            System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.x, point.y), 3, new Scalar(0, 0, 255), -1);
+            System.out.println(point.position);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 3, new Scalar(0, 0, 255), -1);
         }
 
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_candidate_corners.jpg", imageWithCornersPlotted);
         candidateCorners.addAll(candidateCornerHarris);
         candidateCorners.addAll(candidateCornerEllipsis);
 
-        Ponto candidateCorner = getNearestPointToCenterOfRegionOfInterest(candidateCorners);
+        Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
 
         if (candidateCorner != null) {
-            Ponto upperLeftCornerOfRegionOfInterest = corner.add(new Ponto(-RADIUS_OF_REGION_OF_INTEREST, -RADIUS_OF_REGION_OF_INTEREST));
-            Ponto newCornerPosition = candidateCorner.add(upperLeftCornerOfRegionOfInterest);
-            return newCornerPosition;
+            Ponto upperLeftCornerOfRegionOfInterest = corner.position.add(new Ponto(-RADIUS_OF_REGION_OF_INTEREST, -RADIUS_OF_REGION_OF_INTEREST));
+            Ponto newCornerPosition = candidateCorner.position.add(upperLeftCornerOfRegionOfInterest);
+            return new Corner(newCornerPosition.x, newCornerPosition.y, candidateCorner.isStone);
         }
 
         return null;
     }
 
-    private Mat getRegionOfInterestAround(Ponto point, Mat image) {
-        int x = point.x - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.x - RADIUS_OF_REGION_OF_INTEREST : 0;
-        int y = point.y - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.y - RADIUS_OF_REGION_OF_INTEREST : 0;
+    private Mat getRegionOfInterestAround(Corner point, Mat image) {
+        int x = point.position.x - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.position.x - RADIUS_OF_REGION_OF_INTEREST : 0;
+        int y = point.position.y - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.position.y - RADIUS_OF_REGION_OF_INTEREST : 0;
         int w = x + 2 * RADIUS_OF_REGION_OF_INTEREST < image.cols() ? 2 * RADIUS_OF_REGION_OF_INTEREST : image.cols() - x;
         int h = y + 2 * RADIUS_OF_REGION_OF_INTEREST < image.rows() ? 2 * RADIUS_OF_REGION_OF_INTEREST : image.rows() - y;
 
@@ -98,7 +98,7 @@ public class CornerDetector {
         return new Mat(image, regionOfInterest);
     }
 
-    private List<Ponto> detectCandidateCornersByHarrisDetection(Mat regionImage) {
+    private List<Corner> detectCandidateCornersByHarrisDetection(Mat regionImage) {
         Mat correctColorFormatImage = convertImageToCorrectColorFormat(regionImage);
         Mat grayscaleImage = convertToGrayscale(correctColorFormatImage);
         Mat resultOfCornerHarris = applyCornerHarrisTo(grayscaleImage);
@@ -106,7 +106,11 @@ public class CornerDetector {
         double harrisThreshold = calculateHarrisCornerThreshold(resultOfCornerHarris);
         List<PointCluster> cornerPointsClusters = findPossibleCornerPointsAndClusterizeThem(resultOfCornerHarris, harrisThreshold);
         List<Ponto> possibleCenters = findPossibleCenters(cornerPointsClusters);
-        return possibleCenters;
+        List<Corner> candidateCorners = new ArrayList<>();
+        for (Ponto center : possibleCenters) {
+            candidateCorners.add(new Corner(center.x, center.y));
+        }
+        return candidateCorners;
     }
 
     private Mat convertImageToCorrectColorFormat(Mat image) {
@@ -180,22 +184,22 @@ public class CornerDetector {
         return possibleCenters;
     }
 
-    private Ponto getNearestPointToCenterOfRegionOfInterest(List<Ponto> points) {
+    private Corner getCandidateNearestToCenterOfRegionOfInterest(List<Corner> corners) {
         Ponto center = new Ponto(RADIUS_OF_REGION_OF_INTEREST, RADIUS_OF_REGION_OF_INTEREST);
-        Ponto nearestPoint = null;
+        Corner neasrestCorner = null;
         double minimumDistance = 999999999;
-        for (Ponto point : points) {
+        for (Corner point : corners) {
             if (point == null) continue;
-            if (point.distanceTo(center) < minimumDistance) {
-                minimumDistance = point.distanceTo(center);
-                nearestPoint = point;
+            if (point.position.distanceTo(center) < minimumDistance) {
+                minimumDistance = point.position.distanceTo(center);
+                neasrestCorner = point;
             }
         }
-        return nearestPoint;
+        return neasrestCorner;
     }
 
     // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
-    private List<Ponto> detectCandidateCornersByEllipsisFit(Mat image)
+    private List<Corner> detectCandidateCornersByEllipsisFit(Mat image)
     {
         Mat imageWithEllipsis = image.clone();
         Mat preprocessedImage = image.clone();
@@ -218,7 +222,7 @@ public class CornerDetector {
         outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
-        List<Ponto> candidatePoints = new ArrayList<>();
+        List<Corner> candidateCorners = new ArrayList<>();
 
         for (int i = 0; i < contours.size(); i++) {
 
@@ -246,14 +250,15 @@ public class CornerDetector {
             double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
 
             if (leftoverRatio < 0.15) {
-                candidatePoints.add(center);
+                Corner candidateCorner = new Corner(center.x, center.y, true);
+                candidateCorners.add(candidateCorner);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
         }
         outputImageWithContours(image, approximatedContours, "processing/corner_region_" + cornerIndex + "_approximated_contours_" + imageIndex + ".jpg");
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_ellipsis_fit_" + imageIndex + ".jpg", imageWithEllipsis);
 
-        return candidatePoints;
+        return candidateCorners;
     }
 
     private Mat detectBordersIn(Mat image)

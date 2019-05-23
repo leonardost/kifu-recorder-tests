@@ -5,10 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import src.Ponto;
+import src.cornerDetector.Corner;
 
 public class CornerPositionsFile {
 
-    private List<Ponto[]> cornerPositions;
+    private List<Corner[]> cornerPositions;
 
     public CornerPositionsFile(String imageSequenceFolder) {
         cornerPositions = new ArrayList<>();
@@ -16,7 +17,7 @@ public class CornerPositionsFile {
 
         for (String line : lines) {
             if (line.startsWith("#")) continue;
-            Ponto[] points = getPointsFrom(line.trim());
+            Corner[] points = getCornersFrom(line.trim());
             cornerPositions.add(points);
         }
     }
@@ -30,28 +31,29 @@ public class CornerPositionsFile {
         return new ArrayList<>();
     }
 
-    private Ponto[] getPointsFrom(String line) {
+    private Corner[] getCornersFrom(String line) {
         String[] integersAsString = line.split(" ");
-        Ponto[] points = new Ponto[4];
+        Corner[] corners = new Corner[4];
 
         for (int i = 0; i < 4; i++) {
-            points[i] = new Ponto();
-            points[i].x = Integer.parseInt(integersAsString[i * 2]);
-            points[i].y = Integer.parseInt(integersAsString[i * 2 + 1]);
+            corners[i] = new Corner();
+            corners[i].position = new Ponto();
+            corners[i].position.x = Integer.parseInt(integersAsString[i * 2]);
+            corners[i].position.y = Integer.parseInt(integersAsString[i * 2 + 1]);
         }
 
-        return points;
+        return corners;
     }
 
     public int getNumberOfImages() {
         return cornerPositions.size() - 1;
     }
 
-    public Ponto[] getInitialCornersPositions() {
+    public Corner[] getInitialCornersPositions() {
         return cornerPositions.get(0);
     }
 
-    public Ponto[] getCornerPositions(int frameNumber) {
+    public Corner[] getCornerPositions(int frameNumber) {
         return cornerPositions.get(frameNumber);
     }
 

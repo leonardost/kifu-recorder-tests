@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import src.boardDetector.BoardDetector;
+import src.cornerDetector.Corner;
 import src.cornerDetector.CornerDetector;
 import src.Ponto;
 import src.ImageUtils;
@@ -31,9 +32,7 @@ public class process_image {
         CornerPositionsFile cornerPositionsFile = new CornerPositionsFile(imageSequenceFolder);
 
         int numberOfImages = cornerPositionsFile.getNumberOfImages();
-        Ponto[] corners = cornerPositionsFile.getInitialCornersPositions();
-        Ponto[] cornersVerification = corners.clone();
-        int[] numberOfFramesWithouModification = { 0, 0, 0, 0 };
+        Corner[] corners = cornerPositionsFile.getInitialCornersPositions();
 
         CornerDetector cornerDetector = new CornerDetector();
         BoardDetector boardDetector = new BoardDetector();
@@ -44,15 +43,14 @@ public class process_image {
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             cornerDetector.imageIndex = imageIndex;
 
-            Ponto[] possibleNewCorners = new Ponto[4];
+            Corner[] possibleNewCorners = new Corner[4];
             boolean wereAllCornersFound = true;
             for (int i = 0; i < 4; i++) {
-                possibleNewCorners[i] = cornerDetector.updateCorner(image, corners[i], i + 1);
+                cornerDetector.setCornerIndex(i + 1);
+                Corner possibleNewCorner = cornerDetector.findNewCornerAround(corners[i], image);
+                possibleNewCorners[i] = cornerDetector.findNewCornerAround(corners[i], image);
                 if (possibleNewCorners[i] == null) {
                     wereAllCornersFound = false;
-                } else {
-                    numberOfFramesWithouModification[i] = possibleNewCorners[i].distanceTo(corners[i]) < 300 ?
-                        numberOfFramesWithouModification[i] + 1 : 0;
                 }
             }
 
@@ -62,19 +60,18 @@ public class process_image {
 
             System.out.println("Frame " + imageIndex);
 
-            // for (int i = 0; i < 4; i++) {
-            //     if (numberOfFramesWithouModification[i] > 1) {
-            //         System.out.println("Updating corner " + (i + 1));
-            //         corners[i] = possibleNewCorners[i];
-            //         numberOfFramesWithouModification[i] = 0;
-            //     }
-            // }
-
             if (wereAllCornersFound && isCornerMovementUniform(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
             // if (wereAllCornersFound && isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
             // if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
                 for (int i = 0; i < 4; i++) {
+                    if (!corners[i].isStone && possibleNewCorners[i].isStone) {
+                        possibleNewCorners[i].displacementToRealCorner =
+                            possibleNewCorners[i].getDifferenceTo(corners[i]);
+                    } else if (corners[i].isStone && possibleNewCorners[i].isStone) {
+                        possibleNewCorners[i].displacementToRealCorner =
+                            corners[i].displacementToRealCorner;
+                    }
                     corners[i] = possibleNewCorners[i];
                 }
             } else {
@@ -120,7 +117,7 @@ public class process_image {
         return paddedNumber;
     }
 
-    private static void printCornerPositions(int imageIndex, Ponto[] corners) {
+    private static void printCornerPositions(int imageIndex, Corner[] corners) {
         for (int i = 0; i < 4; i++) {
             System.out.print("Corner " + (i + 1) + ": ");
             System.out.println(corners[i]);
@@ -145,7 +142,7 @@ public class process_image {
 
     // Checks if the distance of the old corners to the new corners is uniform
     // There's no situation where only one corner of the board changes location
-    private static boolean isCornerMovementUniform(Ponto[] newCorners, Ponto[] oldCorners) {
+    private static boolean isCornerMovementUniform(Corner[] newCorners, Corner[] oldCorners) {
         double[] distanceToNewPoint = new double[4];
         for (int i = 0; i < 4; i++) {
             distanceToNewPoint[i] = oldCorners[i].distanceTo(newCorners[i]);
@@ -169,27 +166,40 @@ public class process_image {
         return Math.sqrt(sumOfDistancesToMean / distribution.length);
     }
 
-    private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Ponto[] corners) {
+    private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Corner[] corners) {
         int distanceToExpectedPosition = 0;
-        Ponto[] expectedPoints = cornerPositionsFile.getCornerPositions(imageIndex);
+        Corner[] expectedPoints = cornerPositionsFile.getCornerPositions(imageIndex);
         for (int i = 0; i < 4; i++) {
             distanceToExpectedPosition += corners[i].manhattanDistanceTo(expectedPoints[i]);
         }
         System.out.println("Error: " + distanceToExpectedPosition);
     }
 
-    private static void drawBoardContourOnImage(Mat image, Ponto[] corners, int imageIndex) {
+    private static void drawBoardContourOnImage(Mat image, Corner[] corners, int imageIndex) {
         Point[] boardCorners = new Point[4];
-        boardCorners[0] = new Point(corners[0].x, corners[0].y);
-        boardCorners[1] = new Point(corners[1].x, corners[1].y);
-        boardCorners[2] = new Point(corners[2].x, corners[2].y);
-        boardCorners[3] = new Point(corners[3].x, corners[3].y);
+        boardCorners[0] = new Point(corners[0].position.x, corners[0].position.y);
+        boardCorners[1] = new Point(corners[1].position.x, corners[1].position.y);
+        boardCorners[2] = new Point(corners[2].position.x, corners[2].position.y);
+        boardCorners[3] = new Point(corners[3].position.x, corners[3].position.y);
         MatOfPoint boardContour = new MatOfPoint(boardCorners);
+
+        Point[] realBoardContours = new Point[4];
+        realBoardContours[0] = new Point(corners[0].position.x - corners[0].displacementToRealCorner.x, corners[0].position.y - corners[0].displacementToRealCorner.y);
+        realBoardContours[1] = new Point(corners[1].position.x - corners[1].displacementToRealCorner.x, corners[1].position.y - corners[1].displacementToRealCorner.y);
+        realBoardContours[2] = new Point(corners[2].position.x - corners[2].displacementToRealCorner.x, corners[2].position.y - corners[2].displacementToRealCorner.y);
+        realBoardContours[3] = new Point(corners[3].position.x - corners[3].displacementToRealCorner.x, corners[3].position.y - corners[3].displacementToRealCorner.y);
+        MatOfPoint realBoardContour = new MatOfPoint(realBoardContours);
+
+        List<MatOfPoint> realContourPoints = new ArrayList<MatOfPoint>();
+        realContourPoints.add(realBoardContour);
+        Scalar green = new Scalar(0, 255, 0);
+        Imgproc.drawContours(image, realContourPoints, -1, green, 2);
 
         List<MatOfPoint> contourPoints = new ArrayList<MatOfPoint>();
         contourPoints.add(boardContour);
         Scalar red = new Scalar(0, 0, 255);
         Imgproc.drawContours(image, contourPoints, -1, red, 2);
+
         Imgcodecs.imwrite("output/image" + imageIndex + ".jpg", image);
     }
 
