@@ -83,6 +83,7 @@ public class Board implements Serializable {
     public Board rotate(int direction) {
         if (direction == -1) return rotateCounterClockwise();
         else if (direction == 1) return rotateClockwise();
+        return null;
     }
 
     private Board rotateClockwise() {
