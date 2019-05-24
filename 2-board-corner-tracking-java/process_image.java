@@ -60,19 +60,35 @@ public class process_image {
 
             System.out.println("Frame " + imageIndex);
 
-            if (wereAllCornersFound && isCornerMovementUniform(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
-            // if (wereAllCornersFound && isNewContourValid(possibleNewCorners, corners) && boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
-            // if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
                 System.out.println("Board is inside countour");
-                for (int i = 0; i < 4; i++) {
-                    if (!corners[i].isStone && possibleNewCorners[i].isStone) {
-                        possibleNewCorners[i].displacementToRealCorner =
-                            possibleNewCorners[i].getDifferenceTo(corners[i]);
-                    } else if (corners[i].isStone && possibleNewCorners[i].isStone) {
-                        possibleNewCorners[i].displacementToRealCorner =
-                            corners[i].displacementToRealCorner;
+                if (wereAllCornersFound && isCornerMovementUniform(possibleNewCorners, corners)) {
+                    for (int i = 0; i < 4; i++) {
+                        if (possibleNewCorners[i].isStone) {
+                            if (possibleNewCorners[i].distanceTo(corners[i]) < 20) {
+                                // This was probably an algorithm "hiccup", just update the circle corner
+                                // but not the real corner position
+                                possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position.subtract(corners[i].displacementToRealCorner));
+                            } else if (!corners[i].isStone) {
+                                possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position);
+                            } else {
+                                possibleNewCorners[i].displacementToRealCorner =
+                                    corners[i].displacementToRealCorner;
+                            }
+                        }
+                        corners[i] = possibleNewCorners[i];
                     }
-                    corners[i] = possibleNewCorners[i];
+                } else if (didOnlyOneCornerMove(possibleNewCorners, corners)) {
+
+                    // int i = getIndexOfCornerThatMoved(possibleNewCorners, corners);
+                    // if (possibleNewCorners[i].isStone) {
+                    //     if (!corners[i].isStone) {
+                    //         possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position);
+                    //     } else {
+                    //         possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position.add(corners[i].displacementToRealCorner));
+                    //     }
+                    // }
+                    // corners[i] = possibleNewCorners[i];
                 }
             } else {
                 System.out.println("Board is NOT inside countour");
@@ -142,6 +158,7 @@ public class process_image {
 
     // Checks if the distance of the old corners to the new corners is uniform
     // There's no situation where only one corner of the board changes location
+    // (except if it's a stone placement or the corner detector updating)
     private static boolean isCornerMovementUniform(Corner[] newCorners, Corner[] oldCorners) {
         double[] distanceToNewPoint = new double[4];
         for (int i = 0; i < 4; i++) {
@@ -164,6 +181,17 @@ public class process_image {
             sumOfDistancesToMean += Math.pow((distribution[i] - mean), 2);
         }
         return Math.sqrt(sumOfDistancesToMean / distribution.length);
+    }
+
+    private static boolean didOnlyOneCornerMove(Corner[] possibleNewCorners, Corner[] corners) {
+        // Try to find outliers?
+        // https://www.wikihow.com/Calculate-Outliers
+        // If there is only one outlier, only one corner moved
+        // 4 points is too few points to try to catch outliers
+
+        // This is an important method to continue correctly tracking corners
+
+        return false;
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Corner[] corners) {

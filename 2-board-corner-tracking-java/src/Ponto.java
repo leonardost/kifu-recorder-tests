@@ -29,6 +29,13 @@ public class Ponto {
         return newPoint;
     }
 
+    public Ponto subtract(Ponto point) {
+        Ponto newPoint = new Ponto(x, y);
+        newPoint.x -= point.x;
+        newPoint.y -= point.y;
+        return newPoint;
+    }
+
     public String toString() {
         return "(" + x + ", " + y + ")";
     }

@@ -40,6 +40,12 @@ public class Corner {
         return displacement;
     }
 
+    public void updateDisplacementVectorRelativeTo(Ponto point) {
+        displacementToRealCorner = new Ponto(position.x, position.y);
+        displacementToRealCorner.x -= point.x;
+        displacementToRealCorner.y -= point.y;
+    }
+
     public String toString() {
         return position.toString();
     }
