@@ -62,7 +62,7 @@ public class Corner {
     }
 
     public String toString() {
-        return position.toString();
+        return position.toString() + "(is" + (!isStone ? " not " : " ") + "stone)";
     }
 
 }

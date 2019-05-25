@@ -37,9 +37,10 @@ public class CornerPositionsFile {
 
         for (int i = 0; i < 4; i++) {
             corners[i] = new Corner();
-            corners[i].position = new Ponto();
-            corners[i].position.x = Integer.parseInt(integersAsString[i * 2]);
-            corners[i].position.y = Integer.parseInt(integersAsString[i * 2 + 1]);
+            corners[i].position = new Ponto(
+                Integer.parseInt(integersAsString[i * 2]),
+                Integer.parseInt(integersAsString[i * 2 + 1])
+            );
         }
 
         return corners;

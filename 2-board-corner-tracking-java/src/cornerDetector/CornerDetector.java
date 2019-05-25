@@ -40,10 +40,6 @@ public class CornerDetector {
         List<Corner> candidateCornerHarris = detectCandidateCornersByHarrisDetection(regionImage);
         List<Corner> candidateCornerEllipsis = detectCandidateCornersByEllipsisFit(regionImage);
 
-        // If too many Harris corner candidates were found, this probably means the image contains
-        // something other than Go stones. Maybe a player's hand or something else.
-        // if (candidateCornerHarris.size() > 5) return null;
-
         Mat imageWithCornersPlotted = regionImage.clone();
 
         System.out.println("Processing corner " + cornerIndex);
@@ -53,7 +49,7 @@ public class CornerDetector {
         for (Iterator<Corner> it = candidateCornerHarris.iterator(); it.hasNext();) {
             Corner point = it.next();
             for (Corner circlePoint : candidateCornerEllipsis) {
-                if (point.position.distanceTo(circlePoint.position) <= 25 * 25) {
+                if (point.distanceTo(circlePoint) <= 25 * 25) {
                     it.remove();
                     break;
                 }
@@ -62,15 +58,15 @@ public class CornerDetector {
 
         for (Corner point : candidateCornerEllipsis) {
             System.out.println("Candidate corner found by circle detection in frame " + imageIndex + ": ");
-            System.out.println(point.position);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 3, new Scalar(0, 255, 0), -1);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 25, new Scalar(0, 255, 0), 1);
+            System.out.println(point);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 255, 0), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 25, new Scalar(0, 255, 0), 1);
         }
 
         for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
-            System.out.println(point.position);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.position.x, point.position.y), 3, new Scalar(0, 0, 255), -1);
+            System.out.println(point);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 0, 255), -1);
         }
 
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_candidate_corners.jpg", imageWithCornersPlotted);
@@ -79,7 +75,7 @@ public class CornerDetector {
 
         // A corner should have at most 4 candidates, be them Harris corners or ellipsis corners
         // More than that probably means something is wrong in the detection, or there's something
-        // else in the scene
+        // else in the scene, like a player's hand or something else
         if (candidateCorners.size() > 4) return null;
 
         Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
