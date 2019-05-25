@@ -77,6 +77,11 @@ public class CornerDetector {
         candidateCorners.addAll(candidateCornerHarris);
         candidateCorners.addAll(candidateCornerEllipsis);
 
+        // A corner should have at most 4 candidates, be them Harris corners or ellipsis corners
+        // More than that probably means something is wrong in the detection, or there's something
+        // else in the scene
+        if (candidateCorners.size() > 4) return null;
+
         Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
 
         if (candidateCorner != null) {

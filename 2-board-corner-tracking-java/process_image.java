@@ -49,7 +49,6 @@ public class process_image {
             boolean wereAllCornersFound = true;
             for (int i = 0; i < 4; i++) {
                 cornerDetector.setCornerIndex(i + 1);
-                Corner possibleNewCorner = cornerDetector.findNewCornerAround(corners[i], image);
                 possibleNewCorners[i] = cornerDetector.findNewCornerAround(corners[i], image);
                 if (possibleNewCorners[i] == null) {
                     wereAllCornersFound = false;
@@ -65,9 +64,16 @@ public class process_image {
             if (boardDetector.isBoardContainedIn(ortogonalBoardImage) && wereAllCornersFound) {
                 System.out.println("Board is inside countour");
                 int numberOfCornersThatMoved = getNumberOfCornersThatMoved(possibleNewCorners, corners);
+                System.out.println("Number of corners that moved: " + numberOfCornersThatMoved);
+                double[] distanceToNewPoint = new double[4];
+                for (int i = 0; i < 4; i++) {
+                    distanceToNewPoint[i] = possibleNewCorners[i].distanceTo(corners[i]);
+                    System.out.println("Distance to old corner point " + (i + 1) + " = " + distanceToNewPoint[i]);
+                }
 
                 for (int i = 0; i < 4; i++) {
                     if (numberOfCornersThatMoved < 4) {
+                        // Not all corners moved, so this is probably a corner adjustment
                         // Update relative corner position of possible corners with stones
                         if (possibleNewCorners[i].isStone) {
                             if (!corners[i].isStone) {
@@ -77,7 +83,7 @@ public class process_image {
                             }
                         }
                     } else if (possibleNewCorners[i].isStone) {
-                        // All corners moved together, so it was probably a board displacemente and we
+                        // All corners moved together, so this is probably a board displacemente and we
                         // don't update the corners's relative position to the real corners
                         possibleNewCorners[i].displacementToRealCorner = corners[i].displacementToRealCorner;
                     }
