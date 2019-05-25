@@ -20,6 +20,8 @@ public class process_image {
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
 
     public final static int RADIUS_OF_REGION_OF_INTEREST = 50;
+    // Any corner that moves at least this is considered to have moved
+    private final static int MOVEMENT_THRESHOULD = 10;
 
     public static void main(String[] args) {
 
@@ -60,9 +62,20 @@ public class process_image {
 
             System.out.println("Frame " + imageIndex);
 
-            if (boardDetector.isBoardContainedIn(ortogonalBoardImage)) {
+            if (boardDetector.isBoardContainedIn(ortogonalBoardImage) && wereAllCornersFound) {
                 System.out.println("Board is inside countour");
-                if (wereAllCornersFound && isCornerMovementUniform(possibleNewCorners, corners)) {
+                int cornerThatMoved = didOnlyOneCornerMove(possibleNewCorners, corners);
+                if (cornerThatMoved != -1) {
+                    System.out.println("Only corner " + (cornerThatMoved + 1) + " moved");
+                    if (possibleNewCorners[cornerThatMoved].isStone) {
+                        if (!corners[cornerThatMoved].isStone) {
+                            possibleNewCorners[cornerThatMoved].updateDisplacementVectorRelativeTo(corners[cornerThatMoved].position);
+                        } else {
+                            possibleNewCorners[cornerThatMoved].updateDisplacementVectorRelativeTo(corners[cornerThatMoved].position.add(corners[cornerThatMoved].displacementToRealCorner));
+                        }
+                        corners[cornerThatMoved] = possibleNewCorners[cornerThatMoved];
+                    }
+                } else if (isCornerMovementUniform(possibleNewCorners, corners)) {
                     for (int i = 0; i < 4; i++) {
                         if (possibleNewCorners[i].isStone) {
                             if (possibleNewCorners[i].distanceTo(corners[i]) < 20) {
@@ -78,17 +91,6 @@ public class process_image {
                         }
                         corners[i] = possibleNewCorners[i];
                     }
-                } else if (didOnlyOneCornerMove(possibleNewCorners, corners)) {
-
-                    // int i = getIndexOfCornerThatMoved(possibleNewCorners, corners);
-                    // if (possibleNewCorners[i].isStone) {
-                    //     if (!corners[i].isStone) {
-                    //         possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position);
-                    //     } else {
-                    //         possibleNewCorners[i].updateDisplacementVectorRelativeTo(corners[i].position.add(corners[i].displacementToRealCorner));
-                    //     }
-                    // }
-                    // corners[i] = possibleNewCorners[i];
                 }
             } else {
                 System.out.println("Board is NOT inside countour");
@@ -183,15 +185,28 @@ public class process_image {
         return Math.sqrt(sumOfDistancesToMean / distribution.length);
     }
 
-    private static boolean didOnlyOneCornerMove(Corner[] possibleNewCorners, Corner[] corners) {
+    private static int didOnlyOneCornerMove(Corner[] possibleNewCorners, Corner[] corners) {
         // Try to find outliers?
         // https://www.wikihow.com/Calculate-Outliers
         // If there is only one outlier, only one corner moved
         // 4 points is too few points to try to catch outliers
 
         // This is an important method to continue correctly tracking corners
+        for (int i = 0; i < 4; i++) {
+            if (possibleNewCorners[i].distanceTo(corners[i]) > 100 && distanceToOtherCornersIsBelow10(possibleNewCorners, corners, i)) {
+                System.out.println("Distance to old corner point " + (i + 1) + " = " + possibleNewCorners[i].distanceTo(corners[i]));
+                return i;
+            }
+        }
+        return -1;
+    }
 
-        return false;
+    private static boolean distanceToOtherCornersIsBelow10(Corner[] possibleNewCorners, Corner[] corners, int ignoreIndex) {
+        for (int i = 0; i < 4; i++) {
+            if (i == ignoreIndex) continue;
+            if (possibleNewCorners[i].distanceTo(corners[i]) > 10) return false;
+        }
+        return true;
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Corner[] corners) {

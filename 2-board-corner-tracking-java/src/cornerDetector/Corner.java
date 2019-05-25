@@ -24,6 +24,14 @@ public class Corner {
         this.isStone = isStone;
     }
 
+    public int getX() {
+        return position.x;
+    }
+
+    public int getY() {
+        return position.y;
+    }
+
     public double distanceTo(Corner otherCorner) {
         return position.distanceTo(otherCorner.position);
     }
