@@ -54,6 +54,13 @@ public class Corner {
         displacementToRealCorner.y -= point.y;
     }
 
+    public Ponto getRealCornerPosition() {
+        Ponto realCornerPosition = new Ponto(position.x, position.y);
+        realCornerPosition.x -= displacementToRealCorner.x;
+        realCornerPosition.y -= displacementToRealCorner.y;
+        return realCornerPosition;
+    }
+
     public String toString() {
         return position.toString();
     }
