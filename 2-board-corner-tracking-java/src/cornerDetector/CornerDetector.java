@@ -33,10 +33,10 @@ public class CornerDetector {
 
     public Corner findNewCornerAround(Corner corner, Mat image) {
 
+        System.out.println("Processing corner " + cornerIndex);
+
         Mat regionImage = getRegionOfInterestAround(corner, image);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
-
-        System.out.println("Processing corner " + cornerIndex);
 
         List<Corner> candidateCorners = new ArrayList<>();
         List<Corner> candidateCornerHarris = detectCandidateCornersByHarrisDetection(regionImage);
@@ -104,11 +104,12 @@ public class CornerDetector {
     }
 
     private Mat getRegionOfInterestAround(Corner point, Mat image) {
-        int x = point.position.x - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.position.x - RADIUS_OF_REGION_OF_INTEREST : 0;
-        int y = point.position.y - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.position.y - RADIUS_OF_REGION_OF_INTEREST : 0;
+        int x = point.getX() - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.getX() - RADIUS_OF_REGION_OF_INTEREST : 0;
+        int y = point.getY() - RADIUS_OF_REGION_OF_INTEREST > 0 ? point.getY() - RADIUS_OF_REGION_OF_INTEREST : 0;
         int w = x + 2 * RADIUS_OF_REGION_OF_INTEREST < image.cols() ? 2 * RADIUS_OF_REGION_OF_INTEREST : image.cols() - x;
         int h = y + 2 * RADIUS_OF_REGION_OF_INTEREST < image.rows() ? 2 * RADIUS_OF_REGION_OF_INTEREST : image.rows() - y;
 
+        System.out.println("ROI: (x = " + x + ", y = " + y + ", w = " + w + ", h = " + h + ")");
         Rect regionOfInterest = new Rect(x, y, w, h);
         return new Mat(image, regionOfInterest);
     }
