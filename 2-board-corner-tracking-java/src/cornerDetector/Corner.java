@@ -1,11 +1,17 @@
 package src.cornerDetector;
 
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
+import org.opencv.imgproc.Imgproc;
 import src.Ponto;
 
 public class Corner {
     public Ponto position;
     public Ponto displacementToRealCorner;
     public boolean isStone;
+    // Stores the bounding rectangle that corresponds to the detected stone ellipsis
+    public RotatedRect stonePosition;
 
     public Corner() {
         displacementToRealCorner = new Ponto(0, 0);
@@ -59,6 +65,22 @@ public class Corner {
         realCornerPosition.x -= displacementToRealCorner.x;
         realCornerPosition.y -= displacementToRealCorner.y;
         return realCornerPosition;
+    }
+
+    // Checks if a point lies too close to the stone position
+    public boolean isTooCloseToCircle(Ponto position) {
+        if (stonePosition == null) return false;
+
+        // Let's increase the bounding rectangle's size by some proportion, say, 1.2
+        Point[] points = new Point[4];
+        RotatedRect expandedStonePosition = stonePosition.clone();
+        expandedStonePosition.size.width *= 1.4;
+        expandedStonePosition.size.height *= 1.3;
+        expandedStonePosition.points(points);
+        MatOfPoint2f expandedStoneContour = new MatOfPoint2f(points);
+        Point p = new Point(position.x, position.y);
+
+        return Imgproc.pointPolygonTest(expandedStoneContour, p, false) >= 0;
     }
 
     public String toString() {

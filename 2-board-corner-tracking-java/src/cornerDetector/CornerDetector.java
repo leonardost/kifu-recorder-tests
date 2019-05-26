@@ -36,20 +36,21 @@ public class CornerDetector {
         Mat regionImage = getRegionOfInterestAround(corner, image);
         Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
 
+        System.out.println("Processing corner " + cornerIndex);
+
         List<Corner> candidateCorners = new ArrayList<>();
         List<Corner> candidateCornerHarris = detectCandidateCornersByHarrisDetection(regionImage);
         List<Corner> candidateCornerEllipsis = detectCandidateCornersByEllipsisFit(regionImage);
 
         Mat imageWithCornersPlotted = regionImage.clone();
 
-        System.out.println("Processing corner " + cornerIndex);
-
         // Remove Harris corner candidates that are too close to circle corner candidates
         // This is done to try to remove corner candidates that appear on the edge of circles
         for (Iterator<Corner> it = candidateCornerHarris.iterator(); it.hasNext();) {
             Corner point = it.next();
             for (Corner circlePoint : candidateCornerEllipsis) {
-                if (point.distanceTo(circlePoint) <= 25 * 25) {
+                if (circlePoint.isTooCloseToCircle(point.position)) {
+                // if (point.distanceTo(circlePoint) <= 25 * 25) {
                     it.remove();
                     break;
                 }
@@ -60,7 +61,20 @@ public class CornerDetector {
             System.out.println("Candidate corner found by circle detection in frame " + imageIndex + ": ");
             System.out.println(point);
             Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 255, 0), -1);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 25, new Scalar(0, 255, 0), 1);
+
+            // Draw bounding rectangle that encompasses the ellipse that was used to find the stone
+            Point[] points = new Point[4];
+
+            // Let's increase the bounding rectangle's size by some proportion, say, 1.2
+            RotatedRect rect = point.stonePosition.clone();
+            rect.size.width *= 1.4;
+            rect.size.height *= 1.3;
+            rect.points(points);
+
+            for (int i = 0; i < 4; i++) {
+                Imgproc.line(imageWithCornersPlotted, points[i], points[(i+1) % 4], new Scalar(0, 255, 255), 2);
+            }
+            // Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 25, new Scalar(0, 255, 0), 1);
         }
 
         for (Corner point : candidateCornerHarris) {
@@ -220,7 +234,10 @@ public class CornerDetector {
 
         // Detect contours
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
-        outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_ellipses_" + imageIndex + ".jpg");
+        outputImageWithContours(image, contours, "processing/corner_region_" + cornerIndex + "_all_contours_" + imageIndex + ".jpg");
+        // If there are more than 5 contours found, there's probably a finger or some other
+        // kind of interference in the scene
+        if (contours.size() > 5) return new ArrayList<>();
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
         List<Corner> candidateCorners = new ArrayList<>();
@@ -237,10 +254,13 @@ public class CornerDetector {
             Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
             if (!isInsideRegionOfInterest(center)) continue;
 
+            // We plot a mask of the contour we are checking
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.drawContours(maskContour, contours, i, new Scalar(255), -1);
+            // We then plot the found ellipse
             Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
+            // we check the pixels that are only in one or the other image
             Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
             // The leftover is the difference between the contour found and the ellipse we're trying to fit.
             // The less leftover there is, the more the ellipse fits the contour.
@@ -252,6 +272,7 @@ public class CornerDetector {
 
             if (leftoverRatio < 0.15) {
                 Corner candidateCorner = new Corner(center.x, center.y, true);
+                candidateCorner.stonePosition = ellipse;
                 candidateCorners.add(candidateCorner);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }
@@ -273,8 +294,10 @@ public class CornerDetector {
     {
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
+        // Imgproc.findContours(imageWithBordersDetected, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
         Imgproc.findContours(imageWithBordersDetected, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
         removeSmallContours(contours);
+        System.out.println("Number of contours found in scene: " + contours.size());
         return contours;
     }
 
