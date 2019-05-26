@@ -1,0 +1,6 @@
+# image1.jpg possible corner positions marked manually
+# The first value indicates if it is a stone (1) or not (0)
+0 41 44
+1 49 67
+1 9 68
+1 4 40
