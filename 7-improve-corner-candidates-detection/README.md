@@ -21,6 +21,14 @@ least some of the stones and the board corner as possible candidates.
 Log
 ---
 
+#### 26/05/2019 17:26
+
+Corner Harris detection was impproved. The previous PointCluster
+implementation used an arbitraty distance to clusterize points that  were
+near it, which caused separate corner candidates to be clusterized together.
+Now, a depth-first search is done in the image to get the different possible
+corner regions.
+
 #### 25/05/2019 23:45
 
 Creating this experiment.

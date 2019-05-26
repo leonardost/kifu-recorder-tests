@@ -26,19 +26,11 @@ public class process_image {
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
             long startTime = System.nanoTime();
-            cornerDetector.imageIndex = imageIndex;
+            cornerDetector.setImageIndex(imageIndex);
+            Mat image = readImageFile("input/", imageIndex);
 
-            Corner[] possibleNewCorners = new Corner[4];
-            boolean wereAllCornersFound = true;
-            for (int i = 0; i < 4; i++) {
-                cornerDetector.setCornerIndex(i + 1);
-                possibleNewCorners[i] = cornerDetector.findNewCornerAround(corners[i], image);
-                if (possibleNewCorners[i] == null) {
-                    wereAllCornersFound = false;
-                }
-            }
+            List<Corner> possibleNewCorners = cornerDetector.findCornerCandidatesIn(image);
 
-            printCornerPositions(imageIndex, corners);
             // printDetectionError(cornerPositionsFile, imageIndex, corners);
 
             System.out.println();
@@ -49,14 +41,7 @@ public class process_image {
     }
 
     private static Mat readImageFile(String inputFolder, int imageNumber) {
-        return Imgcodecs.imread(inputFolder + "/frame" + imageNumber + ".jpg");
-    }
-
-    private static void printCornerPositions(int imageIndex, Corner[] corners) {
-        for (int i = 0; i < 4; i++) {
-            System.out.print("Corner " + (i + 1) + ": ");
-            System.out.println(corners[i]);
-        }
+        return Imgcodecs.imread(inputFolder + "/image" + imageNumber + ".jpg");
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Corner[] corners) {

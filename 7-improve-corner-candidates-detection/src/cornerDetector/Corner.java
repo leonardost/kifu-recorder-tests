@@ -71,6 +71,9 @@ public class Corner {
     public boolean isTooCloseToCircle(Ponto position) {
         if (stonePosition == null) return false;
 
+        // Circular distance, this is how it was before
+        // return position.distanceTo(position) <= 25 * 25);
+
         // Let's increase the bounding rectangle's size by some proportion, say, 1.2
         Point[] points = new Point[4];
         RotatedRect expandedStonePosition = stonePosition.clone();

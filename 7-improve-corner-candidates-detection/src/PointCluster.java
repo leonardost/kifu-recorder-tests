@@ -5,8 +5,6 @@ import java.util.List;
 
 public class PointCluster {
 
-    private static final double DISTANCE_THRESHOULD_TO_BELONG_TO_A_CLUSTER = 100.0;
-
     private Ponto centroid;
     private List<Ponto> points;
 
@@ -36,10 +34,6 @@ public class PointCluster {
     public double distanceTo(Ponto point) {
         if (centroid.y == -1) return 0;
         return centroid.distanceTo(point);
-    }
-
-    public boolean isInsideClusterDistance(Ponto point) {
-        return distanceTo(point) < DISTANCE_THRESHOULD_TO_BELONG_TO_A_CLUSTER;
     }
 
 }
