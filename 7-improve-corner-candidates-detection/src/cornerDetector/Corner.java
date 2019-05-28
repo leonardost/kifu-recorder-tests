@@ -81,8 +81,8 @@ public class Corner {
 
         // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
         // Some checks should be done to see if this is correct
-        double cos = Math.cos(expandedStonePosition.angle);
-        double sin = Math.sin(expandedStonePosition.angle);
+        double cos = Math.cos(Math.toRadians(expandedStonePosition.angle));
+        double sin = Math.sin(Math.toRadians(expandedStonePosition.angle));
         double minorAxis = (expandedStonePosition.size.width / 2) * (expandedStonePosition.size.width / 2);
         double majorAxis = (expandedStonePosition.size.height / 2) * (expandedStonePosition.size.height / 2);
         double a = cos * (point.x - getX()) + sin * (point.y - getY());
