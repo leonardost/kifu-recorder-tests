@@ -36,48 +36,41 @@ public class CornerDetector {
     public List<Corner> findCornerCandidatesIn(Mat image) {
         List<Corner> candidateCorners = new ArrayList<>();
         List<Corner> candidateCornerHarris = harrisCornerDetector.detectCandidateCornersIn(image);
-        // List<Corner> candidateCornerEllipsis = ellipseCornerDetector.detectCandidateCornersIn(image);
-        List<Corner> candidateCornerEllipsis = new ArrayList<>();
+        List<Corner> candidateCornerEllipsis = ellipseCornerDetector.detectCandidateCornersIn(image);
+        // List<Corner> candidateCornerEllipsis = new ArrayList<>();
 
         Mat imageWithCornersPlotted = image.clone();
 
         // Remove Harris corner candidates that are too close to circle corner candidates
         // This is done to try to remove corner candidates that appear on the edge of circles
-        // for (Iterator<Corner> it = candidateCornerHarris.iterator(); it.hasNext();) {
-        //     Corner point = it.next();
-        //     for (Corner circlePoint : candidateCornerEllipsis) {
-        //         if (circlePoint.isTooCloseToCircle(point.position)) {
-        //             it.remove();
-        //             break;
-        //         }
-        //     }
-        // }
+        for (Iterator<Corner> it = candidateCornerHarris.iterator(); it.hasNext();) {
+            Corner point = it.next();
+            for (Corner circlePoint : candidateCornerEllipsis) {
+                if (circlePoint.isTooCloseToCircle(point.position)) {
+                    it.remove();
+                    break;
+                }
+            }
+        }
 
         for (Corner point : candidateCornerEllipsis) {
             System.out.println("Candidate corner found by circle detection in image " + imageIndex + ": ");
             System.out.println(point);
+            System.out.println("width of rotated rectangle:");
+            System.out.println(point.stonePosition.size.width);
+            System.out.println("height of rotated rectangle:");
+            System.out.println(point.stonePosition.size.height);
+            System.out.println("angle of rotated rectangle:");
+            System.out.println(point.stonePosition.angle);
             Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 255, 0), -1);
-
-            // Draw bounding rectangle that encompasses the ellipse that was used to find the stone
-            Point[] points = new Point[4];
-
-            // Let's increase the bounding rectangle's size by some proportion, say, 1.2
-            RotatedRect rect = point.stonePosition.clone();
-            rect.size.width *= 1.4;
-            rect.size.height *= 1.3;
-            rect.points(points);
-
-            for (int i = 0; i < 4; i++) {
-                Imgproc.line(imageWithCornersPlotted, points[i], points[(i+1) % 4], new Scalar(0, 255, 255), 2);
-            }
-            // Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 25, new Scalar(0, 255, 0), 1);
+            Imgproc.ellipse(imageWithCornersPlotted, point.stonePosition, new Scalar(0, 255, 255));
         }
 
         Random random = new Random();
         for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
             System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 0, 255), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 1, new Scalar(0, 0, 255), -1);
         }
 
         Imgcodecs.imwrite("processing/image" + imageIndex + "_candidate_corners.png", imageWithCornersPlotted);

@@ -83,6 +83,10 @@ public class EllipseCornerDetector {
             if (leftoverRatio < 0.15) {
                 Corner candidateCorner = new Corner(center.x, center.y, true);
                 candidateCorner.stonePosition = ellipse;
+                // Let's increase the ellipse size to encompass the entire stone and some more
+                // The perspective should be taken into account here, but let's leave it like this for now
+                ellipse.size.width *= 1.4;
+                ellipse.size.height *= 1.3;
                 candidateCorners.add(candidateCorner);
                 Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
             }

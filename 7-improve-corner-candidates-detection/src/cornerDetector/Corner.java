@@ -68,26 +68,30 @@ public class Corner {
     }
 
     // Checks if a point lies too close to the stone position
-    public boolean isTooCloseToCircle(Ponto position) {
+    public boolean isTooCloseToCircle(Ponto point) {
         if (stonePosition == null) return false;
 
         // Circular distance, this is how it was before
         // return position.distanceTo(position) <= 25 * 25);
 
-        // Let's increase the bounding rectangle's size by some proportion, say, 1.2
-        Point[] points = new Point[4];
-        RotatedRect expandedStonePosition = stonePosition.clone();
-        expandedStonePosition.size.width *= 1.4;
-        expandedStonePosition.size.height *= 1.3;
-        expandedStonePosition.points(points);
-        MatOfPoint2f expandedStoneContour = new MatOfPoint2f(points);
-        Point p = new Point(position.x, position.y);
 
-        return Imgproc.pointPolygonTest(expandedStoneContour, p, false) >= 0;
+        RotatedRect expandedStonePosition = stonePosition.clone();
+        // expandedStonePosition.points(points);
+        // MatOfPoint2f expandedStoneContour = new MatOfPoint2f(points);
+
+        // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
+        // Some checks should be done to see if this is correct
+        double cos = Math.cos(expandedStonePosition.angle);
+        double sin = Math.sin(expandedStonePosition.angle);
+        double minorAxis = (expandedStonePosition.size.width / 2) * (expandedStonePosition.size.width / 2);
+        double majorAxis = (expandedStonePosition.size.height / 2) * (expandedStonePosition.size.height / 2);
+        double a = cos * (point.x - getX()) + sin * (point.y - getY());
+        double b = sin * (point.x - getX()) - cos * (point.y - getY());
+        return (a * a / minorAxis) + (b * b / majorAxis) <= 1;
     }
 
     public String toString() {
         return position.toString() + " (is" + (!isStone ? " not " : " ") + "stone)";
     }
 
-}
+ }
