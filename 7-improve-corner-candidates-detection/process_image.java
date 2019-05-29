@@ -29,7 +29,7 @@ public class process_image {
             cornerDetector.setImageIndex(imageIndex);
             Mat image = readImageFile("input/", imageIndex);
 
-            List<Corner> possibleNewCorners = cornerDetector.findCornerCandidatesIn(image);
+            List<Corner> possibleNewCorners = cornerDetector.detectCandidateCornersIn(image);
 
             // printDetectionError(cornerPositionsFile, imageIndex, corners);
 

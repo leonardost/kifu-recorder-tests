@@ -1,26 +1,18 @@
 package src.cornerDetector;
 
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import src.Ponto;
 
-public class CornerDetector {
+public class CornerDetector implements CornerDetectorInterface {
 
     public int imageIndex;
 
@@ -29,17 +21,13 @@ public class CornerDetector {
 
     public void setImageIndex(int imageIndex) {
         this.imageIndex = imageIndex;
-        harrisCornerDetector.imageIndex = imageIndex;
-        ellipseCornerDetector.imageIndex = imageIndex;
+        harrisCornerDetector.setImageIndex(imageIndex);
+        ellipseCornerDetector.setImageIndex(imageIndex);
     };
 
-    public List<Corner> findCornerCandidatesIn(Mat image) {
-        List<Corner> candidateCorners = new ArrayList<>();
+    public List<Corner> detectCandidateCornersIn(Mat image) {
         List<Corner> candidateCornerHarris = harrisCornerDetector.detectCandidateCornersIn(image);
         List<Corner> candidateCornerEllipsis = ellipseCornerDetector.detectCandidateCornersIn(image);
-        // List<Corner> candidateCornerEllipsis = new ArrayList<>();
-
-        Mat imageWithCornersPlotted = image.clone();
 
         // Remove Harris corner candidates that are too close to circle corner candidates
         // This is done to try to remove corner candidates that appear on the edge of circles
@@ -52,6 +40,8 @@ public class CornerDetector {
                 }
             }
         }
+
+        Mat imageWithCornersPlotted = image.clone();
 
         for (Corner point : candidateCornerEllipsis) {
             System.out.println("Candidate corner found by circle detection in image " + imageIndex + ": ");
@@ -66,7 +56,6 @@ public class CornerDetector {
             Imgproc.ellipse(imageWithCornersPlotted, point.stonePosition, new Scalar(0, 255, 255));
         }
 
-        Random random = new Random();
         for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
             System.out.println(point);
@@ -74,7 +63,8 @@ public class CornerDetector {
         }
 
         Imgcodecs.imwrite("processing/image" + imageIndex + "_candidate_corners.png", imageWithCornersPlotted);
-        Imgcodecs.imwrite("processing/image" + imageIndex + "_candidate_corners.jpg", imageWithCornersPlotted);
+        // Imgcodecs.imwrite("processing/image" + imageIndex + "_candidate_corners.jpg", imageWithCornersPlotted);
+        List<Corner> candidateCorners = new ArrayList<>();
         candidateCorners.addAll(candidateCornerHarris);
         candidateCorners.addAll(candidateCornerEllipsis);
 

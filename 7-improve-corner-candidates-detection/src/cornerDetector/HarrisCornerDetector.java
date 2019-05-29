@@ -12,9 +12,13 @@ import java.util.List;
 import src.Ponto;
 import src.PointCluster;
 
-public class HarrisCornerDetector {
+public class HarrisCornerDetector implements CornerDetectorInterface {
 
-    public int imageIndex;
+    private int imageIndex;
+
+    public void setImageIndex(int imageIndex) {
+        this.imageIndex = imageIndex;
+    }
 
     public List<Corner> detectCandidateCornersIn(Mat image) {
         Mat correctColorFormatImage = convertImageToCorrectColorFormat(image);

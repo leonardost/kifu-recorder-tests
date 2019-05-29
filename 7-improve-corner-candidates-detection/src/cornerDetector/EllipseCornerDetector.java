@@ -20,9 +20,13 @@ import java.util.Random;
 
 import src.Ponto;
 
-public class EllipseCornerDetector {
+public class EllipseCornerDetector implements CornerDetectorInterface {
 
-    public int imageIndex;
+    private int imageIndex;
+
+    public void setImageIndex(int imageIndex) {
+        this.imageIndex = imageIndex;
+    }
 
     // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
     public List<Corner> detectCandidateCornersIn(Mat image) {
@@ -45,8 +49,8 @@ public class EllipseCornerDetector {
         // Detect contours
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, "processing/image" + imageIndex + "_all_contours.jpg");
-        // If there are more than 5 contours found, there's probably a finger or some other
-        // kind of interference in the scene
+        // If more than 5 contours are found, there's probably a finger or
+        // some other kind of interference in the scene
         if (contours.size() > 5) return new ArrayList<>();
 
         List<MatOfPoint> approximatedContours = new ArrayList<>();
@@ -62,7 +66,6 @@ public class EllipseCornerDetector {
 
             RotatedRect ellipse = Imgproc.fitEllipse(contour2f);
             Ponto center = new Ponto((int)ellipse.center.x, (int)ellipse.center.y);
-            // if (!isInsideRegionOfInterest(center)) continue;
 
             // We plot a mask of the contour we are checking
             Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));

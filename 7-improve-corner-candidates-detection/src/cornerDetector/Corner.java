@@ -1,9 +1,8 @@
 package src.cornerDetector;
 
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
-import org.opencv.imgproc.Imgproc;
+
 import src.Ponto;
 
 public class Corner {
@@ -71,13 +70,7 @@ public class Corner {
     public boolean isTooCloseToCircle(Ponto point) {
         if (stonePosition == null) return false;
 
-        // Circular distance, this is how it was before
-        // return position.distanceTo(position) <= 25 * 25);
-
-
         RotatedRect expandedStonePosition = stonePosition.clone();
-        // expandedStonePosition.points(points);
-        // MatOfPoint2f expandedStoneContour = new MatOfPoint2f(points);
 
         // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
         // Some checks should be done to see if this is correct
