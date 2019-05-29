@@ -70,7 +70,7 @@ public class CornerDetector {
         for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
             System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 1, new Scalar(0, 0, 255), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 0, 255), -1);
         }
 
         Imgcodecs.imwrite("processing/image" + imageIndex + "_candidate_corners.png", imageWithCornersPlotted);

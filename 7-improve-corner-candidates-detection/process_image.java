@@ -21,7 +21,7 @@ public class process_image {
     public static void main(String[] args) {
 
         CornerDetector cornerDetector = new CornerDetector();
-        int numberOfImages = 1;
+        int numberOfImages = 3;
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
