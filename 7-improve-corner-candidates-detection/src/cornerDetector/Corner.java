@@ -45,14 +45,6 @@ public class Corner {
         return position.manhattanDistanceTo(otherCorner.position);
     }
 
-    // Gets the displacement vector from this point to the other
-    public Ponto getDifferenceTo(Corner otherCorner) {
-        Ponto displacement = new Ponto(position.x, position.y);
-        displacement.x -= otherCorner.position.x;
-        displacement.y -= otherCorner.position.y;
-        return displacement;
-    }
-
     public void updateDisplacementVectorRelativeTo(Ponto point) {
         displacementToRealCorner = new Ponto(position.x, position.y);
         displacementToRealCorner.x -= point.x;
@@ -70,14 +62,13 @@ public class Corner {
     public boolean isTooCloseToCircle(Ponto point) {
         if (stonePosition == null) return false;
 
-        RotatedRect expandedStonePosition = stonePosition.clone();
+        RotatedRect ellipse = stonePosition.clone();
 
         // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
-        // Some checks should be done to see if this is correct
-        double cos = Math.cos(Math.toRadians(expandedStonePosition.angle));
-        double sin = Math.sin(Math.toRadians(expandedStonePosition.angle));
-        double minorAxis = (expandedStonePosition.size.width / 2) * (expandedStonePosition.size.width / 2);
-        double majorAxis = (expandedStonePosition.size.height / 2) * (expandedStonePosition.size.height / 2);
+        double cos = Math.cos(Math.toRadians(ellipse.angle));
+        double sin = Math.sin(Math.toRadians(ellipse.angle));
+        double minorAxis = (ellipse.size.width / 2) * (ellipse.size.width / 2);
+        double majorAxis = (ellipse.size.height / 2) * (ellipse.size.height / 2);
         double a = cos * (point.x - getX()) + sin * (point.y - getY());
         double b = sin * (point.x - getX()) - cos * (point.y - getY());
         return (a * a / minorAxis) + (b * b / majorAxis) <= 1;
