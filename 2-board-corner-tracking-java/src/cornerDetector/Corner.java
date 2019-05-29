@@ -1,9 +1,8 @@
 package src.cornerDetector;
 
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
-import org.opencv.imgproc.Imgproc;
+
 import src.Ponto;
 
 public class Corner {
@@ -42,16 +41,12 @@ public class Corner {
         return position.distanceTo(otherCorner.position);
     }
 
-    public double manhattanDistanceTo(Corner otherCorner) {
-        return position.manhattanDistanceTo(otherCorner.position);
+    public double distanceTo(Ponto point) {
+        return position.distanceTo(point);
     }
 
-    // Gets the displacement vector from this point to the other
-    public Ponto getDifferenceTo(Corner otherCorner) {
-        Ponto displacement = new Ponto(position.x, position.y);
-        displacement.x -= otherCorner.position.x;
-        displacement.y -= otherCorner.position.y;
-        return displacement;
+    public double manhattanDistanceTo(Corner otherCorner) {
+        return position.manhattanDistanceTo(otherCorner.position);
     }
 
     public void updateDisplacementVectorRelativeTo(Ponto point) {
@@ -68,23 +63,23 @@ public class Corner {
     }
 
     // Checks if a point lies too close to the stone position
-    public boolean isTooCloseToCircle(Ponto position) {
+    public boolean isTooCloseToCircle(Ponto point) {
         if (stonePosition == null) return false;
 
-        // Let's increase the bounding rectangle's size by some proportion, say, 1.2
-        Point[] points = new Point[4];
-        RotatedRect expandedStonePosition = stonePosition.clone();
-        expandedStonePosition.size.width *= 1.4;
-        expandedStonePosition.size.height *= 1.3;
-        expandedStonePosition.points(points);
-        MatOfPoint2f expandedStoneContour = new MatOfPoint2f(points);
-        Point p = new Point(position.x, position.y);
+        RotatedRect ellipse = stonePosition.clone();
 
-        return Imgproc.pointPolygonTest(expandedStoneContour, p, false) >= 0;
+        // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
+        double cos = Math.cos(Math.toRadians(ellipse.angle));
+        double sin = Math.sin(Math.toRadians(ellipse.angle));
+        double minorAxis = (ellipse.size.width / 2) * (ellipse.size.width / 2);
+        double majorAxis = (ellipse.size.height / 2) * (ellipse.size.height / 2);
+        double a = cos * (point.x - getX()) + sin * (point.y - getY());
+        double b = sin * (point.x - getX()) - cos * (point.y - getY());
+        return (a * a / minorAxis) + (b * b / majorAxis) <= 1;
     }
 
     public String toString() {
         return position.toString() + " (is" + (!isStone ? " not " : " ") + "stone)";
     }
 
-}
+ }

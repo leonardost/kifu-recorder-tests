@@ -43,13 +43,14 @@ public class process_image {
 
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
-            cornerDetector.imageIndex = imageIndex;
+            cornerDetector.setImageIndex(imageIndex);
 
             Corner[] possibleNewCorners = new Corner[4];
             boolean wereAllCornersFound = true;
             for (int i = 0; i < 4; i++) {
                 cornerDetector.setCornerIndex(i + 1);
-                possibleNewCorners[i] = cornerDetector.findNewCornerAround(corners[i], image);
+                cornerDetector.setCorner(corners[i]);
+                possibleNewCorners[i] = cornerDetector.detectCornerIn(image);
                 if (possibleNewCorners[i] == null) {
                     wereAllCornersFound = false;
                 }
