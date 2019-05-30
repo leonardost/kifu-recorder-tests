@@ -12,12 +12,12 @@ create_and_clear_folder() {
 create_and_clear_folder "processing"
 create_and_clear_folder "output"
 
-javac -cp .:opencv-341.jar process_image.java
+javac -cp .:lib/opencv-341.jar process_image.java
 
 if [ -z "$1" ]; then
-    java -Djava.library.path=".:/home/leo/" -cp .:opencv-341.jar process_image datasets/sequence-1 > results.log
+    java -Djava.library.path=".:/home/leo/" -cp .:lib/opencv-341.jar process_image datasets/sequence-1 > results.log
 else
-    java -Djava.library.path=".:/home/leo/" -cp .:opencv-341.jar process_image "$1" > results.log
+    java -Djava.library.path=".:/home/leo/" -cp .:lib/opencv-341.jar process_image "$1" > results.log
 fi
 
 find . -name \*.class -type f -delete 
