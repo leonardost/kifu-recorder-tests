@@ -2,10 +2,8 @@ package src;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import src.Ponto;
 import src.cornerDetector.Corner;
 
 public class ImageUtils {

@@ -1,13 +1,6 @@
 package src.boardDetector;
 
-import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfKeyPoint;
-import org.opencv.imgcodecs.Imgcodecs;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import src.ParallelChecker;
 

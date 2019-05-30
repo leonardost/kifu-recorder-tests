@@ -1,6 +1,5 @@
 package src.cornerDetector;
 
-import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 
 import src.Ponto;
