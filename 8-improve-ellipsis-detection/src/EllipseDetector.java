@@ -54,7 +54,8 @@ public class EllipseDetector {
     private Mat preprocessImage(Mat image) {
         // Blur image to smooth noise
         Imgproc.blur(image, image, new Size(3, 3));
-        // Detect borders
+        Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed_image_0.jpg", image);
+        // Detect borders with Canny filter
         image = detectBordersIn(image);
         Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed_image_1.jpg", image);
         Imgproc.dilate(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
