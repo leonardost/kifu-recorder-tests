@@ -17,24 +17,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-public class EllipseDetector {
+public class FirstEllipseDetector implements EllipseDetectorInterface {
 
     private int imageIndex;
     private Mat image;
-    private List<MatOfPoint> approximatedContours = new ArrayList<>();
+    private List<MatOfPoint> approximatedContours;
+
+    public String getName() {
+        return "first ellipse detector";
+    }
 
     public void setImageIndex(int imageIndex) {
         this.imageIndex = imageIndex;
     }
 
     // https://stackoverflow.com/questions/35121045/find-cost-of-ellipse-in-opencv
-    public void detectEllipsisIn(Mat image) {
+    public List<RotatedRect> detectEllipsesIn(Mat image) {
         this.image = image.clone();
-        Mat imageWithEllipsis = image.clone();
+        Mat imageWithEllipses = image.clone();
+        approximatedContours = new ArrayList<>();
 
         Mat preprocessedImage = preprocessImage(image.clone());
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         outputImageWithContours(image, contours, "processing/image" + imageIndex + "_all_contours.jpg");
+        List<RotatedRect> ellipses = new ArrayList<>();
 
         for (int i = 0; i < contours.size(); i++) {
             RotatedRect ellipse = getEllipseFrom(contours.get(i));
@@ -44,11 +50,14 @@ public class EllipseDetector {
             // The perspective should be taken into account here, but let's leave it like this for now
             ellipse.size.width *= 1.4;
             ellipse.size.height *= 1.3;
-            Imgproc.ellipse(imageWithEllipsis, ellipse, new Scalar(0, 255, 0));
+            ellipses.add(ellipse);
+            Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
         }
 
         outputImageWithContours(image, approximatedContours, "processing/image" + imageIndex + "_approximated_contours.jpg");
-        Imgcodecs.imwrite("processing/image" + imageIndex + "_ellipsis_fit.jpg", imageWithEllipsis);
+        Imgcodecs.imwrite("processing/image" + imageIndex + "_ellipse_fit.jpg", imageWithEllipses);
+
+        return ellipses;
     }
 
     private Mat preprocessImage(Mat image) {
@@ -113,7 +122,7 @@ public class EllipseDetector {
     private RotatedRect getEllipseFrom(MatOfPoint contour)
     {
         MatOfPoint approximatedContour = approximateContour(contour);
-        if (!canContourBeAnEllipsis(approximatedContour)) return null;
+        if (!canContourBeAnEllipse(approximatedContour)) return null;
         approximatedContours.add(approximatedContour);
         RotatedRect ellipse = fitEllipseInContour(contour); 
         if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;
@@ -122,7 +131,7 @@ public class EllipseDetector {
     }
 
     // A contour that can be an ellipse must be convex and have at least 5 sides
-    private boolean canContourBeAnEllipsis(MatOfPoint contour)
+    private boolean canContourBeAnEllipse(MatOfPoint contour)
     {
         return Imgproc.isContourConvex(contour) && contour.rows() >= 5;
     }

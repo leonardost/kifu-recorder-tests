@@ -1,4 +1,4 @@
-Improve ellipsis detection
+Improve ellipses detection
 ==========================
 
 This will improve corner detection.
