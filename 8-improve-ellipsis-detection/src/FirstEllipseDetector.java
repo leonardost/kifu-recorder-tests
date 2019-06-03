@@ -17,6 +17,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * This detector first preprocesses the image following these steps:
+ * - Blur
+ * - Detect borders with Canny filter
+ * - Dilation
+ * - Erosion
+ * - Invert
+ * - Erosion
+ * 
+ * Then, the resulting image's contours are detected using
+ * Imgproc.findContours. Small contours are removed.
+ * 
+ * Each resulting contour is then checked to see if it can be an
+ * ellipse by following these steps:
+ * - Check if it is convex and has at least 5 sides
+ * - An ellipse that fits that contour is found with Imgproc.fitEllipse
+ * - That ellipse is checked against the original contour by counting
+ *   the number of pixels that remain in a XOR operation of them
+ * - If the ratio between that number of pixels and the area of the
+ *   ellipse is smaller than 15%, that ellipse is stored. This means
+ *   the contour is probably an ellipse
+ */
 public class FirstEllipseDetector implements EllipseDetectorInterface {
 
     private int imageIndex;
