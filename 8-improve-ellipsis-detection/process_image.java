@@ -7,6 +7,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import src.EllipseDetectorInterface;
 import src.FirstEllipseDetector;
+import src.SecondEllipseDetector;
 
 public class process_image {
 
@@ -17,6 +18,7 @@ public class process_image {
 
         List<EllipseDetectorInterface> ellipseDetectors = new ArrayList<>();
         ellipseDetectors.add(new FirstEllipseDetector());
+        ellipseDetectors.add(new SecondEllipseDetector());
 
         for (int imageIndex = 1; imageIndex <= NUMBER_OF_IMAGES; imageIndex++) {
             System.out.println("Image " + imageIndex);
@@ -24,7 +26,8 @@ public class process_image {
 
             for (EllipseDetectorInterface detector : ellipseDetectors) {
                 long startTime = System.nanoTime();
-                System.out.println("(" + detector.getName() + ")");
+                System.out.println();
+                System.out.println("--- " + detector.getName() + " ---");
 
                 detector.setImageIndex(imageIndex);
                 detector.detectEllipsesIn(image);
@@ -33,7 +36,8 @@ public class process_image {
                 System.out.println("Elapsed time = " + (System.nanoTime() - startTime) / 1000000000.0);
             }
 
-            System.out.println("=====");
+            System.out.println("=====================================");
+            System.out.println();
         }
 
     }
