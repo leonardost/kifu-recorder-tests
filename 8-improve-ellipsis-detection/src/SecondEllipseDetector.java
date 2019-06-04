@@ -130,18 +130,76 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
             return null;
         }
 
+        int numberOfRows = histogram.rows();
         int[] centroids = new int[numberOfClusters];
 
         // Let's initialize the centroids at each extreme of the histogram
         centroids[0] = 0;
-        centroids[1] = histogram.rows();
+        centroids[1] = numberOfRows - 1;
         if (numberOfClusters > 2) {
-            centroids[2] = histogram.rows() / 2;
+            centroids[2] = numberOfRows / 2;
         }
 
-        boolean converged = true;
+        boolean converged = false;
+        int[] labels = new int[numberOfRows];
+        int[] oldLabels = new int[numberOfRows];
+        for (int i = 0; i < numberOfRows; i++) {
+            oldLabels[i] = -1;
+        }
+
         while (!converged) {
-            // double[][] distancesToCentroids
+            int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
+
+            for (int i = 0; i < numberOfClusters; i++) {
+                for (int j = 0; j < numberOfRows; j++) {
+                    distancesToCentroids[i][ centroids[i] ] = 0;
+                    for (int k = centroids[i] - 1; k >= 0; k--) {
+                        distancesToCentroids[i][k] = distancesToCentroids[i][k + 1]
+                            + (int)histogram.get(k, 0)[0] * (centroids[i] - k);
+                    }
+                    for (int k = centroids[i] + 1; k < histogram.rows(); k++) {
+                        distancesToCentroids[i][k] = distancesToCentroids[i][k - 1]
+                            + (int)histogram.get(k, 0)[0] * (k - centroids[i]);
+                    } 
+                }
+            }
+
+            System.out.println("Distances = ");
+            for (int i = 0; i < numberOfClusters; i++) {
+                System.out.println("Centroid " + i + ", which is " + centroids[i]);
+                for (int j = 0; j < numberOfRows; j++) {
+                    System.out.println("Distance to row " + j + " = " + distancesToCentroids[i][j]);
+                }
+            }
+            System.out.println("-------");
+
+            converged = true;
+
+            for (int i = 0; i < numberOfRows; i++) {
+                int smallestDistance = 999999999;
+                int nearestCluster = -1;
+                for (int j = 0; j < numberOfClusters; j++) {
+                    if (distancesToCentroids[j][i] < smallestDistance) {
+                        smallestDistance = distancesToCentroids[j][i];
+                        nearestCluster = j;
+                    }
+                }
+
+                if (nearestCluster != oldLabels[i]) {
+                    converged = false;
+                }
+                oldLabels[i] = labels[i];
+                labels[i] = nearestCluster;
+            }
+        }
+
+        for (int i = 0; i < numberOfRows; i++) {
+            System.out.println("Row " + i + " label = " + labels[i]);
+        }
+
+        System.out.println("Centroids = ");
+        for (int i = 0; i < numberOfClusters; i++) {
+            System.out.println(i + " - " + centroids[i]);
         }
 
         return centroids;
