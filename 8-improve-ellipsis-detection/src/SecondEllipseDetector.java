@@ -104,12 +104,27 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
     private Mat preprocessImage(Mat image) {
         // Blur image to smooth noise
+        // Being "myopic" here might be good to smooth out imperfections and
+        // focus on the colors
+        Imgproc.blur(image, image, new Size(5, 5));
+        // Imgproc.blur(image, image, new Size(5, 5));
         Imgproc.blur(image, image, new Size(3, 3));
+        Imgproc.blur(image, image, new Size(3, 3));
+        // Imgproc.blur(image, image, new Size(3, 3));
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_1.jpg", image);
         // Convert to grayscale
         image = convertToGrayscale(image);
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_2.jpg", image);
-        return image;
+        // https://docs.opencv.org/3.4/d3/dc1/tutorial_basic_linear_transform.html
+        // Adjust brightness and contrast
+        Mat processedImage = new Mat();
+        // image.convertTo(m, rtype, alpha, beta);
+        double alpha = 1.4; // contrast
+        int beta = -50; // brightness
+        image.convertTo(processedImage, -1, alpha, beta);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3.jpg", processedImage);
+        // Gamma correction
+        return processedImage;
 
         // // Detect borders with Canny filter
         // image = detectBordersIn(image);
@@ -232,6 +247,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
         // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
+        // int threshold = (centroid + 1) * 16 + 16;
         int threshold = centroid * 16 + 16;
         for (int i = 0; i < image.rows(); i++) {
             for (int j = 0; j < image.cols(); j++) {
@@ -272,6 +288,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
         // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
+        // int threshold = (centroid - 1) * 16;
         int threshold = centroid * 16;
         for (int i = 0; i < image.rows(); i++) {
             for (int j = 0; j < image.cols(); j++) {
@@ -283,6 +300,10 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
             }
         }
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
+        Mat dilatedImage = new Mat();
+        // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
+        Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
 
         System.out.println("depth = ");
         System.out.println(filteredImage.depth());
@@ -300,7 +321,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
             c.add(contour);
             Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 0), 2);
         }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_contours.png", imageWithContoursDetected);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
 
         return null;
     }
