@@ -15,6 +15,8 @@ import org.opencv.core.TermCriteria;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import javafx.scene.transform.Rotate;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -75,6 +77,9 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         int[] centroids = clusterizeHistogramAndReturnCentroids(histogram, numberOfClusters);
 
+        List<RotatedRect> darkEllipses = getPossibleEllipsesByFilteringBelow(centroids[0], preprocessedImage);
+        List<RotatedRect> lightEllipses = getPossibleEllipsesByFilteringOver(centroids[1], preprocessedImage);
+
         // List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
         // outputImageWithContours(image, contours, "processing/image" + imageIndex + "_all_contours.jpg");
         List<RotatedRect> ellipses = new ArrayList<>();
@@ -120,7 +125,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
     private Mat convertToGrayscale(Mat image) {
         Mat grayscaleImage = new Mat();
-        Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY, 1); // 1 channel
         return grayscaleImage;
     }
 
@@ -142,10 +147,10 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         boolean converged = false;
         int[] labels = new int[numberOfRows];
-        int[] oldLabels = new int[numberOfRows];
-        for (int i = 0; i < numberOfRows; i++) {
-            oldLabels[i] = -1;
-        }
+        int[] oldCentroids = new int[numberOfClusters];
+        oldCentroids[0] = 0;
+        oldCentroids[1] = numberOfRows - 1;
+        oldCentroids[2] = numberOfRows / 2;
 
         while (!converged) {
             int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
@@ -164,16 +169,16 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
                 }
             }
 
-            System.out.println("Distances = ");
-            for (int i = 0; i < numberOfClusters; i++) {
-                System.out.println("Centroid " + i + ", which is " + centroids[i]);
-                for (int j = 0; j < numberOfRows; j++) {
-                    System.out.println("Distance to row " + j + " = " + distancesToCentroids[i][j]);
-                }
-            }
+            // System.out.println("Distances = ");
+            // for (int i = 0; i < numberOfClusters; i++) {
+            //     System.out.println("Centroid " + i + ", which is " + centroids[i]);
+            //     for (int j = 0; j < numberOfRows; j++) {
+            //         System.out.println("Distance to row " + j + " = " + distancesToCentroids[i][j]);
+            //     }
+            // }
             System.out.println("-------");
 
-            converged = true;
+            int[] sumOfElementsOfEachCluster = new int[numberOfClusters];
 
             for (int i = 0; i < numberOfRows; i++) {
                 int smallestDistance = 999999999;
@@ -184,13 +189,31 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
                         nearestCluster = j;
                     }
                 }
+                sumOfElementsOfEachCluster[ nearestCluster ] += histogram.get(i, 0)[0];
 
-                if (nearestCluster != oldLabels[i]) {
-                    converged = false;
-                }
-                oldLabels[i] = labels[i];
                 labels[i] = nearestCluster;
             }
+
+            converged = true;
+
+            for (int i = 0; i < numberOfClusters; i++) {
+                int sum = 0;
+                int medianOfCluster = sumOfElementsOfEachCluster[i] / 2;
+
+                for (int j = 0; j < numberOfRows; j++) {
+                    if (labels[j] != i) continue;
+
+                    sum += histogram.get(j, 0)[0];
+
+                    if (sum >= medianOfCluster) {
+                        System.out.println("Centroid " + i + " is now " + j);
+                        if (centroids[i] != j) converged = false;
+                        centroids[i] = j;
+                        break;
+                    }
+                }
+            }
+
         }
 
         for (int i = 0; i < numberOfRows; i++) {
@@ -203,6 +226,83 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         }
 
         return centroids;
+    }
+
+    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image) {
+        // There are 256 possible pixel intensities and the histogram has 16 bins,
+        // so each bin represents a reange of 16 pixels
+        Mat filteredImage = image.clone();
+        int threshold = centroid * 16 + 16;
+        for (int i = 0; i < image.rows(); i++) {
+            for (int j = 0; j < image.cols(); j++) {
+                if (image.get(i, j)[0] <= threshold) {
+                    filteredImage.put(i, j, new double[]{ 255, 255, 255 });
+                } else {
+                    filteredImage.put(i, j, new double[]{ 0, 0, 0 });
+                }
+            }
+        }
+
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter.png", filteredImage);
+
+        // https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/17820615
+        System.out.println("depth = ");
+        System.out.println(filteredImage.depth());
+        // https://stackoverflow.com/questions/15245262/opencv-mat-element-types-and-their-sizes
+        System.out.println("channels = ");
+        System.out.println(filteredImage.channels());
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(filteredImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+        // removeSmallContours(contours);
+        // System.out.println("Number of contours found in scene: " + contours.size());
+        Mat imageWithContoursDetected = image.clone();
+        for (MatOfPoint contour : contours) {
+            List<MatOfPoint> c = new ArrayList<>();
+            c.add(contour);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(255, 255, 255), 2);
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter_contours.png", imageWithContoursDetected);
+
+        return null;
+    }
+
+    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image) {
+        // There are 256 possible pixel intensities and the histogram has 16 bins,
+        // so each bin represents a reange of 16 pixels
+        Mat filteredImage = image.clone();
+        int threshold = centroid * 16;
+        for (int i = 0; i < image.rows(); i++) {
+            for (int j = 0; j < image.cols(); j++) {
+                if (image.get(i, j)[0] >= threshold) {
+                    filteredImage.put(i, j, new double[]{ 255, 255, 255 });
+                } else {
+                    filteredImage.put(i, j, new double[]{ 0, 0, 0 });
+                }
+            }
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
+
+        System.out.println("depth = ");
+        System.out.println(filteredImage.depth());
+        System.out.println("channels = ");
+        System.out.println(filteredImage.channels());
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(filteredImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+        // removeSmallContours(contours);
+        // System.out.println("Number of contours found in scene: " + contours.size());
+        Mat imageWithContoursDetected = image.clone();
+        for (MatOfPoint contour : contours) {
+            List<MatOfPoint> c = new ArrayList<>();
+            c.add(contour);
+            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 0), 2);
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_contours.png", imageWithContoursDetected);
+
+        return null;
     }
 
     private Mat detectBordersIn(Mat image) {
