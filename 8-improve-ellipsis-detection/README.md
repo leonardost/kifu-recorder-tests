@@ -84,6 +84,12 @@ outside the board and half of a white stone.
 Log
 ---
 
+#### 06/05/2019 20:22
+
+The SecondEllipseDetector, which uses k-means clustering to try to find
+stones in images, seems very promising. Maybe it's even better than the
+first one, which uses ellipse fitting to contours.
+
 #### 30/05/2019 21:52
 
 Creating this experiment. 

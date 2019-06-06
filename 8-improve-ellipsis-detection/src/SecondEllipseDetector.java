@@ -46,7 +46,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
     }
 
     public List<RotatedRect> detectEllipsesIn(Mat image) {
-        Mat preprocessedImage = preprocessImage(image.clone());
+        this.image = image;
+        Mat preprocessedImage = preprocessImage(image);
 
         // Calculate histogram
         // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=calcHist
@@ -79,69 +80,56 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         List<RotatedRect> darkEllipses = getPossibleEllipsesByFilteringBelow(centroids[0], preprocessedImage);
         List<RotatedRect> lightEllipses = getPossibleEllipsesByFilteringOver(centroids[1], preprocessedImage);
-
-        // List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
-        // outputImageWithContours(image, contours, "processing/image" + imageIndex + "_all_contours.jpg");
         List<RotatedRect> ellipses = new ArrayList<>();
+        ellipses.addAll(darkEllipses);
+        ellipses.addAll(lightEllipses);
 
-        // for (int i = 0; i < contours.size(); i++) {
-        //     RotatedRect ellipse = getEllipseFrom(contours.get(i));
-        //     if (ellipse == null) continue;
-
-        //     // Let's increase the ellipse size to encompass the entire stone and some more
-        //     // The perspective should be taken into account here, but let's leave it like this for now
-        //     ellipse.size.width *= 1.4;
-        //     ellipse.size.height *= 1.3;
-        //     ellipses.add(ellipse);
-        //     Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
-        // }
-
-        // // outputImageWithContours(image, approximatedContours, "processing/image" + imageIndex + "_approximated_contours.jpg");
-        // Imgcodecs.imwrite("processing/image" + imageIndex + "_ellipse_fit.jpg", imageWithEllipses);
+        Mat imageWithEllipses = image.clone();
+        for (RotatedRect ellipse : ellipses) {
+            Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_ellipses.jpg", imageWithEllipses);
 
         return ellipses;
     }
 
     private Mat preprocessImage(Mat image) {
-        // Blur image to smooth noise
-        // Being "myopic" here might be good to smooth out imperfections and
-        // focus on the colors
-        Imgproc.blur(image, image, new Size(5, 5));
-        // Imgproc.blur(image, image, new Size(5, 5));
-        Imgproc.blur(image, image, new Size(3, 3));
-        Imgproc.blur(image, image, new Size(3, 3));
-        // Imgproc.blur(image, image, new Size(3, 3));
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_1.jpg", image);
-        // Convert to grayscale
-        image = convertToGrayscale(image);
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_2.jpg", image);
-        // https://docs.opencv.org/3.4/d3/dc1/tutorial_basic_linear_transform.html
-        // Adjust brightness and contrast
-        Mat processedImage = new Mat();
-        // image.convertTo(m, rtype, alpha, beta);
-        double alpha = 1.4; // contrast
-        int beta = -50; // brightness
-        image.convertTo(processedImage, -1, alpha, beta);
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3.jpg", processedImage);
-        // Gamma correction
+        Mat processedImage = image.clone();
+        processedImage = blur(processedImage);
+        processedImage = convertToGrayscale(processedImage);
+        processedImage = adjustBrightnessAndContrast(processedImage);
         return processedImage;
+    }
 
-        // // Detect borders with Canny filter
-        // image = detectBordersIn(image);
-        // Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed_image_1.jpg", image);
-        // Imgproc.dilate(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        // Imgproc.erode(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        // Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed_image_2.jpg", image);
-        // // Invert regions
-        // Core.bitwise_not(image, image);
-        // Imgproc.erode(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
-        // Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed_image_3.jpg", image);
+    // Blur image to smooth out noise. Being "myopic" here might be
+    // good to smooth out imperfections and focus on the colors
+    private Mat blur(Mat image) {
+        Mat blurredImage = image.clone();
+        Imgproc.blur(blurredImage, blurredImage, new Size(5, 5));
+        Imgproc.blur(blurredImage, blurredImage, new Size(3, 3));
+        Imgproc.blur(blurredImage, blurredImage, new Size(3, 3));
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_1.jpg", blurredImage);
+        return blurredImage;
     }
 
     private Mat convertToGrayscale(Mat image) {
         Mat grayscaleImage = new Mat();
         Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY, 1); // 1 channel
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_2.jpg", grayscaleImage);
         return grayscaleImage;
+    }
+
+    // https://docs.opencv.org/3.4/d3/dc1/tutorial_basic_linear_transform.html
+    // Adjust brightness and contrast
+    private Mat adjustBrightnessAndContrast(Mat image) {
+        Mat adjustedImage = new Mat();
+        double alpha = 1.4; // contrast
+        int beta = -50; // brightness
+        // image.convertTo(m, rtype, alpha, beta);
+        image.convertTo(adjustedImage, -1, alpha, beta);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3.jpg", adjustedImage);
+        // Don't know if Gamma correction is needed
+        return adjustedImage;
     }
 
     private int[] clusterizeHistogramAndReturnCentroids(Mat histogram, int numberOfClusters) {
@@ -271,17 +259,32 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
         Imgproc.findContours(filteredImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        // removeSmallContours(contours);
-        // System.out.println("Number of contours found in scene: " + contours.size());
+        removeSmallContours(contours);
+        System.out.println("Number of contours found in scene: " + contours.size());
         Mat imageWithContoursDetected = image.clone();
+
+        List<RotatedRect> ellipses = new ArrayList<>();
+
         for (MatOfPoint contour : contours) {
             List<MatOfPoint> c = new ArrayList<>();
             c.add(contour);
             Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(255, 255, 255), 2);
+
+            RotatedRect ellipse = getEllipseFrom(contour);
+            if (ellipse != null) ellipses.add(ellipse);
         }
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter_contours.png", imageWithContoursDetected);
 
-        return null;
+        return ellipses;
+    }
+
+    private RotatedRect getEllipseFrom(MatOfPoint contour)
+    {
+        MatOfPoint approximatedContour = approximateContour(contour);
+        if (!canContourBeAnEllipse(approximatedContour)) return null;
+        RotatedRect ellipse = fitEllipseInContour(contour); 
+        if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;
+        return ellipse;
     }
 
     private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image) {
@@ -312,18 +315,24 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-        Imgproc.findContours(filteredImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        // removeSmallContours(contours);
-        // System.out.println("Number of contours found in scene: " + contours.size());
+        Imgproc.findContours(dilatedImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+        removeSmallContours(contours);
+        System.out.println("Number of contours found in scene: " + contours.size());
         Mat imageWithContoursDetected = image.clone();
+
+        List<RotatedRect> ellipses = new ArrayList<>();
+
         for (MatOfPoint contour : contours) {
             List<MatOfPoint> c = new ArrayList<>();
             c.add(contour);
             Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 0), 2);
+
+            RotatedRect ellipse = getEllipseFrom(contour);
+            if (ellipse != null) ellipses.add(ellipse);
         }
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
 
-        return null;
+        return ellipses;
     }
 
     private Mat detectBordersIn(Mat image) {
@@ -367,17 +376,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         Imgcodecs.imwrite(filename, imageWithContoursDetected);
     }
-
-    // private RotatedRect getEllipseFrom(MatOfPoint contour)
-    // {
-    //     MatOfPoint approximatedContour = approximateContour(contour);
-    //     if (!canContourBeAnEllipse(approximatedContour)) return null;
-    //     approximatedContours.add(approximatedContour);
-    //     RotatedRect ellipse = fitEllipseInContour(contour); 
-    //     if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;
-
-    //     return ellipse;
-    // }
 
     // A contour that can be an ellipse must be convex and have at least 5 sides
     private boolean canContourBeAnEllipse(MatOfPoint contour)
