@@ -51,6 +51,36 @@ corner detector detected two Harris corner points on the boundaries of
 the stone, which should not have been detected. This happened because
 the detected stone ellipse did not cover the stone entirely.
 
+### image5.jpg
+
+corner_region_1_frame17.jpg from sequence-15, got from running command
+`./compile_and_run.sh datasets/sequence-15` in folder
+`2-board-corner-tracking-java` on commit
+ea2b39ab469dca35ab623595a6571f6d0d745284.
+
+It corresponds to the region from (405, 123) to (485, 203) of frame 17.
+It shows a black stone and a white stone partially covered by a finger.
+
+### image6.jpg
+
+corner_region_1_frame18.jpg from sequence-15, got from running command
+`./compile_and_run.sh datasets/sequence-15` in folder
+`2-board-corner-tracking-java` on commit
+ea2b39ab469dca35ab623595a6571f6d0d745284.
+
+It shows a black stone, half of a white stone and a little bit of a
+shadow cast by a finger outside the image view.
+
+### image7.jpg
+
+corner_region_1_frame38.jpg from sequence-15, got from running command
+`./compile_and_run.sh datasets/sequence-15` in folder
+`2-board-corner-tracking-java` on commit
+ea2b39ab469dca35ab623595a6571f6d0d745284.
+
+It shows a black stone partially covered by a shadow that comes from
+outside the board and half of a white stone.
+
 Log
 ---
 

@@ -12,7 +12,7 @@ import src.SecondEllipseDetector;
 public class process_image {
 
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
-    private final static int NUMBER_OF_IMAGES = 4;
+    private final static int NUMBER_OF_IMAGES = 7;
 
     public static void main(String[] args) {
 
