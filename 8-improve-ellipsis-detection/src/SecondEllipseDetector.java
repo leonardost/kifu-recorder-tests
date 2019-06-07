@@ -6,7 +6,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
@@ -18,7 +17,6 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Steps:
@@ -71,8 +69,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         System.out.println("labels =");
         System.out.println(labels.t().dump());
 
+        // Centroid 0 centers around the dark pixels and centroid 1 around the light ones
         int[] centroids = clusterizeHistogramAndReturnCentroids(histogram, numberOfClusters);
-
         List<RotatedRect> darkEllipses = getPossibleEllipsesByFilteringBelow(centroids[0], preprocessedImage);
         List<RotatedRect> lightEllipses = getPossibleEllipsesByFilteringOver(centroids[1], preprocessedImage);
         List<RotatedRect> ellipses = new ArrayList<>();
@@ -245,16 +243,15 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return centroids;
     }
 
-    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
+    private Mat getFilteredImage(int threshold, int operation, Mat image)
     {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
         // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
-        // int threshold = (centroid + 1) * 16 + 16;
-        int threshold = centroid * 16 + 16;
+
         for (int i = 0; i < image.rows(); i++) {
             for (int j = 0; j < image.cols(); j++) {
-                if (image.get(i, j)[0] <= threshold) {
+                if (doesPixelPassFilter(image.get(i, j)[0], threshold, operation)) {
                     filteredImage.put(i, j, new double[]{ 255, 255, 255 });
                 } else {
                     filteredImage.put(i, j, new double[]{ 0, 0, 0 });
@@ -262,23 +259,25 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
             }
         }
 
+        return filteredImage;
+    }
+
+    private boolean doesPixelPassFilter(double pixelValue, int threshold, int operation)
+    {
+        return operation == 0 ? pixelValue <= threshold : pixelValue >= threshold;
+    }
+
+    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
+    {
+        Mat filteredImage = getFilteredImage(centroid * 16 + 16, 0, image);
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter.png", filteredImage);
 
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Imgproc.findContours(filteredImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        removeSmallContours(contours);
-        System.out.println("Number of contours found in scene: " + contours.size());
+        List<MatOfPoint> contours = findContoursIn(filteredImage);
         Mat imageWithContoursDetected = image.clone();
+        Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(255, 255, 255), 2);
 
         List<RotatedRect> ellipses = new ArrayList<>();
-
         for (MatOfPoint contour : contours) {
-            List<MatOfPoint> c = new ArrayList<>();
-            c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(255, 255, 255), 2);
-
             RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
             if (ellipse != null) ellipses.add(ellipse);
         }
@@ -287,48 +286,14 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return ellipses;
     }
 
-    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
+    private List<MatOfPoint> findContoursIn(Mat image)
     {
-        // There are 256 possible pixel intensities and the histogram has 16 bins,
-        // so each bin represents a reange of 16 pixels
-        Mat filteredImage = image.clone();
-        // int threshold = (centroid - 1) * 16;
-        int threshold = centroid * 16;
-        for (int i = 0; i < image.rows(); i++) {
-            for (int j = 0; j < image.cols(); j++) {
-                if (image.get(i, j)[0] >= threshold) {
-                    filteredImage.put(i, j, new double[]{ 255, 255, 255 });
-                } else {
-                    filteredImage.put(i, j, new double[]{ 0, 0, 0 });
-                }
-            }
-        }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
-        Mat dilatedImage = new Mat();
-        // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
-        Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
-
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-        Imgproc.findContours(dilatedImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+        Imgproc.findContours(image, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
         removeSmallContours(contours);
         System.out.println("Number of contours found in scene: " + contours.size());
-        Mat imageWithContoursDetected = image.clone();
-
-        List<RotatedRect> ellipses = new ArrayList<>();
-
-        for (MatOfPoint contour : contours) {
-            List<MatOfPoint> c = new ArrayList<>();
-            c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 0), 2);
-
-            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
-            if (ellipse != null) ellipses.add(ellipse);
-        }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
-
-        return ellipses;
+        return contours;
     }
 
     private void removeSmallContours(List<MatOfPoint> contours)
@@ -339,6 +304,29 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
                 it.remove();
             }
         }
+    }
+
+    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
+    {
+        Mat filteredImage = getFilteredImage(centroid * 16, 1, image);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
+        Mat dilatedImage = new Mat();
+        // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
+        Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
+
+        List<MatOfPoint> contours = findContoursIn(dilatedImage);
+        Mat imageWithContoursDetected = image.clone();
+        Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(0, 0, 0), 2);
+
+        List<RotatedRect> ellipses = new ArrayList<>();
+        for (MatOfPoint contour : contours) {
+            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
+            if (ellipse != null) ellipses.add(ellipse);
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
+
+        return ellipses;
     }
 
 }
