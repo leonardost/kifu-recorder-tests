@@ -67,10 +67,10 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         // https://stackoverflow.com/questions/44386786/k-means-clustering-for-color-based-segmentation-using-opencv-in-android
         // Core.kmeans(data, K, bestLabels, criteria, attempts, flags, centers);
         Core.kmeans(histogram.t(), numberOfClusters, labels, criteria, 10, Core.KMEANS_RANDOM_CENTERS, centers);
-        System.out.println("centers =");
-        System.out.println(centers.dump());
-        System.out.println("labels =");
-        System.out.println(labels.t().dump());
+        // System.out.println("centers =");
+        // System.out.println(centers.dump());
+        // System.out.println("labels =");
+        // System.out.println(labels.t().dump());
 
         // Centroid 0 centers around the dark pixels and centroid 1 around the light ones
         int[] centroids = clusterizeHistogramAndReturnCentroids(histogram, numberOfClusters);
@@ -80,11 +80,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         ellipses.addAll(darkEllipses);
         ellipses.addAll(lightEllipses);
 
-        Mat imageWithEllipses = image.clone();
-        for (RotatedRect ellipse : ellipses) {
-            Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
-        }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_ellipses.jpg", imageWithEllipses);
+        drawEllipses(ellipses, image);
 
         return ellipses;
     }
@@ -254,6 +250,18 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return findPossibleEllipsesIn(filteredImage, "dark");
     }
 
+    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
+    {
+        Mat filteredImage = getFilteredImage(centroid * 16, FILTER_OVER, image);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
+        Mat dilatedImage = new Mat();
+        // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
+        Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
+
+        return findPossibleEllipsesIn(dilatedImage, "light");
+    }
+
     private Mat getFilteredImage(int threshold, int operation, Mat image)
     {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
@@ -313,16 +321,13 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         }
     }
 
-    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
+    private void drawEllipses(List<RotatedRect> ellipses, Mat image)
     {
-        Mat filteredImage = getFilteredImage(centroid * 16, FILTER_OVER, image);
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
-        Mat dilatedImage = new Mat();
-        // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
-        Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
-
-        return findPossibleEllipsesIn(dilatedImage, "light");
+        Mat imageWithEllipses = image.clone();
+        for (RotatedRect ellipse : ellipses) {
+            Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
+        }
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_ellipses.jpg", imageWithEllipses);
     }
 
 }
