@@ -15,8 +15,6 @@ import org.opencv.core.TermCriteria;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import javafx.scene.transform.Rotate;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
