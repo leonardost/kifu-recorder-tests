@@ -27,36 +27,33 @@ import java.util.Random;
  * - Clusterize historgram in 3 groups, which represent the black
  *   stones, the white stones and the board
  * - Mask out white stones and black stones separately
+ * - Dilate white stones because they're usually harder to detect
  * - Detect contours
  * - Check if each contour can be an ellipse
  */
-public class SecondEllipseDetector implements EllipseDetectorInterface {
-
+public class SecondEllipseDetector implements EllipseDetectorInterface
+{
+    private EllipseChecker ellipseChecker = new EllipseChecker();
     private int imageIndex;
-    private Mat image;
 
-    public String getName() {
-        return "second ellipse detector, uses histogram";
+    public String getName()
+    {
+        return "second ellipse detector, uses k-means clustering on grayscale image histogram";
     }
 
-    public void setImageIndex(int imageIndex) {
+    public void setImageIndex(int imageIndex)
+    {
         this.imageIndex = imageIndex;
     }
 
-    public List<RotatedRect> detectEllipsesIn(Mat image) {
-        this.image = image;
+    public List<RotatedRect> detectEllipsesIn(Mat image)
+    {
+        ellipseChecker.setImage(image);
         Mat preprocessedImage = preprocessImage(image);
 
-        // Calculate histogram
-        // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=calcHist
-        List<Mat> images = new ArrayList<>();
-        images.add(preprocessedImage);
-        Mat histogram = new Mat();
-        MatOfInt histogramSize = new MatOfInt(16); // number of bins
-        MatOfFloat ranges = new MatOfFloat(0f, 256f);
-        Imgproc.calcHist(images, new MatOfInt(0), new Mat(), histogram, histogramSize, ranges);
-        // Imgproc.calcHist(images, channels, mask, hist, histSize, ranges);
-        System.out.println("histogram = ");
+        int numberOfBins = 16;
+        Mat histogram = getHistogramFrom(preprocessedImage, numberOfBins);
+        System.out.println("histogram with 16 bins = ");
         System.out.println(histogram.t().dump());
 
         // Clsuterize these points using k-means
@@ -91,7 +88,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         return ellipses;
     }
 
-    private Mat preprocessImage(Mat image) {
+    private Mat preprocessImage(Mat image)
+    {
         Mat processedImage = image.clone();
         processedImage = blur(processedImage);
         processedImage = convertToGrayscale(processedImage);
@@ -101,7 +99,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
     // Blur image to smooth out noise. Being "myopic" here might be
     // good to smooth out imperfections and focus on the colors
-    private Mat blur(Mat image) {
+    private Mat blur(Mat image)
+    {
         Mat blurredImage = image.clone();
         Imgproc.blur(blurredImage, blurredImage, new Size(5, 5));
         Imgproc.blur(blurredImage, blurredImage, new Size(3, 3));
@@ -110,7 +109,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         return blurredImage;
     }
 
-    private Mat convertToGrayscale(Mat image) {
+    private Mat convertToGrayscale(Mat image)
+    {
         Mat grayscaleImage = new Mat();
         Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY, 1); // 1 channel
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_2.jpg", grayscaleImage);
@@ -119,7 +119,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
     // https://docs.opencv.org/3.4/d3/dc1/tutorial_basic_linear_transform.html
     // Adjust brightness and contrast
-    private Mat adjustBrightnessAndContrast(Mat image) {
+    private Mat adjustBrightnessAndContrast(Mat image)
+    {
         Mat adjustedImage = new Mat();
         double alpha = 1.4; // contrast
         int beta = -50; // brightness
@@ -130,7 +131,22 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         return adjustedImage;
     }
 
-    private int[] clusterizeHistogramAndReturnCentroids(Mat histogram, int numberOfClusters) {
+    // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=calcHist
+    // Get histogram from image
+    private Mat getHistogramFrom(Mat image, int numberOfBins)
+    {
+        Mat histogram = new Mat();
+        List<Mat> images = new ArrayList<>();
+        images.add(image);
+        MatOfInt histogramSize = new MatOfInt(numberOfBins); // number of bins
+        MatOfFloat ranges = new MatOfFloat(0f, 256f);
+        // Imgproc.calcHist(images, channels, mask, hist, histSize, ranges);
+        Imgproc.calcHist(images, new MatOfInt(0), new Mat(), histogram, histogramSize, ranges);
+        return histogram;
+    }
+
+    private int[] clusterizeHistogramAndReturnCentroids(Mat histogram, int numberOfClusters)
+    {
         if (numberOfClusters < 2) {
             // This number should be at least 2
             return null;
@@ -229,7 +245,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         return centroids;
     }
 
-    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image) {
+    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
+    {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
         // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
@@ -247,12 +264,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
 
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter.png", filteredImage);
 
-        // https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/17820615
-        System.out.println("depth = ");
-        System.out.println(filteredImage.depth());
-        // https://stackoverflow.com/questions/15245262/opencv-mat-element-types-and-their-sizes
-        System.out.println("channels = ");
-        System.out.println(filteredImage.channels());
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -268,7 +279,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
             c.add(contour);
             Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(255, 255, 255), 2);
 
-            RotatedRect ellipse = getEllipseFrom(contour);
+            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
             if (ellipse != null) ellipses.add(ellipse);
         }
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter_contours.png", imageWithContoursDetected);
@@ -276,16 +287,8 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         return ellipses;
     }
 
-    private RotatedRect getEllipseFrom(MatOfPoint contour)
+    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
     {
-        MatOfPoint approximatedContour = approximateContour(contour);
-        if (!canContourBeAnEllipse(approximatedContour)) return null;
-        RotatedRect ellipse = fitEllipseInContour(contour); 
-        if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;
-        return ellipse;
-    }
-
-    private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image) {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
         // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
@@ -306,11 +309,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
         Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
 
-        System.out.println("depth = ");
-        System.out.println(filteredImage.depth());
-        System.out.println("channels = ");
-        System.out.println(filteredImage.channels());
-
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
         Imgproc.findContours(dilatedImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
@@ -325,29 +323,12 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
             c.add(contour);
             Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(0, 0, 0), 2);
 
-            RotatedRect ellipse = getEllipseFrom(contour);
+            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
             if (ellipse != null) ellipses.add(ellipse);
         }
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
 
         return ellipses;
-    }
-
-    private Mat detectBordersIn(Mat image) {
-        Mat imageWithBordersDetected = new Mat();
-        Imgproc.Canny(image, imageWithBordersDetected, 50, 150);
-        return imageWithBordersDetected;
-    }
-
-    private List<MatOfPoint> detectContoursIn(Mat imageWithBordersDetected)
-    {
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        // Imgproc.findContours(imageWithBordersDetected, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        Imgproc.findContours(imageWithBordersDetected, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        removeSmallContours(contours);
-        System.out.println("Number of contours found in scene: " + contours.size());
-        return contours;
     }
 
     private void removeSmallContours(List<MatOfPoint> contours)
@@ -358,67 +339,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface {
                 it.remove();
             }
         }
-    }
-
-    private static void outputImageWithContours(Mat image, List<MatOfPoint> contours, String filename) {
-        Mat imageWithContoursDetected = image.clone();
-        Random random = new Random();
-        for (MatOfPoint contour : contours) {
-            int color1 = random.nextInt(255);
-            int color2 = random.nextInt(255);
-            int color3 = random.nextInt(255);
-            List<MatOfPoint> c = new ArrayList<>();
-            c.add(contour);
-            Imgproc.drawContours(imageWithContoursDetected, c, -1, new Scalar(color1, color2, color3), 2);
-        }
-
-        Imgcodecs.imwrite(filename, imageWithContoursDetected);
-    }
-
-    // A contour that can be an ellipse must be convex and have at least 5 sides
-    private boolean canContourBeAnEllipse(MatOfPoint contour)
-    {
-        return Imgproc.isContourConvex(contour) && contour.rows() >= 5;
-    }
-
-    private MatOfPoint approximateContour(MatOfPoint contour)
-    {
-        MatOfPoint2f contour2f = new MatOfPoint2f();
-        MatOfPoint2f approx2f = new MatOfPoint2f();
-        contour.convertTo(contour2f, CvType.CV_32FC2);
-        // The lower epsilon is, the more exact the approximation has to be
-        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.03, true);
-        MatOfPoint approx = new MatOfPoint();
-        approx2f.convertTo(approx, CvType.CV_32S);
-        return approx;
-    }
-
-    private RotatedRect fitEllipseInContour(MatOfPoint contour) {
-        MatOfPoint2f contour2f = new MatOfPoint2f();
-        contour.convertTo(contour2f, CvType.CV_32FC2);
-        return Imgproc.fitEllipse(contour2f);
-    }
-
-    private boolean isEllipseAGoodFitAgainstContour(RotatedRect ellipse, MatOfPoint contour) {
-        // We plot a mask of the contour we are checking
-        Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        List<MatOfPoint> contours = new ArrayList<>();
-        contours.add(contour);
-        Imgproc.drawContours(maskContour, contours, 0, new Scalar(255), -1);
-        // We then plot the found ellipse
-        Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
-        // we check the pixels that are only in one or the other image
-        Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        // The leftover is the difference between the contour found and the ellipse we're trying to fit.
-        // The less leftover there is, the more the ellipse fits the contour.
-        Core.bitwise_xor(maskContour, maskEllipse, leftover);
-
-        int leftoverCount = Core.countNonZero(leftover);
-        int maskEllipseCount = Core.countNonZero(maskEllipse);
-        double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
-
-        return leftoverRatio < 0.15;
     }
 
 }
