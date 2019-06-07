@@ -34,6 +34,9 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     private EllipseChecker ellipseChecker = new EllipseChecker();
     private int imageIndex;
 
+    private static final int FILTER_UNDER = 0;
+    private static final int FILTER_OVER = 1;
+
     public String getName()
     {
         return "second ellipse detector, uses k-means clustering on grayscale image histogram";
@@ -243,6 +246,14 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return centroids;
     }
 
+    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
+    {
+        Mat filteredImage = getFilteredImage(centroid * 16 + 16, FILTER_UNDER, image);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter.png", filteredImage);
+
+        return findPossibleEllipsesIn(filteredImage, "dark");
+    }
+
     private Mat getFilteredImage(int threshold, int operation, Mat image)
     {
         // There are 256 possible pixel intensities and the histogram has 16 bins,
@@ -264,25 +275,21 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
 
     private boolean doesPixelPassFilter(double pixelValue, int threshold, int operation)
     {
-        return operation == 0 ? pixelValue <= threshold : pixelValue >= threshold;
+        return operation == FILTER_UNDER ? pixelValue <= threshold : pixelValue >= threshold;
     }
 
-    private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
+    private List<RotatedRect> findPossibleEllipsesIn(Mat image, String suffix)
     {
-        Mat filteredImage = getFilteredImage(centroid * 16 + 16, 0, image);
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter.png", filteredImage);
-
-        List<MatOfPoint> contours = findContoursIn(filteredImage);
+        List<MatOfPoint> contours = findContoursIn(image);
         Mat imageWithContoursDetected = image.clone();
         Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(255, 255, 255), 2);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_" + suffix + "_filter_contours.png", imageWithContoursDetected);
 
         List<RotatedRect> ellipses = new ArrayList<>();
         for (MatOfPoint contour : contours) {
             RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
             if (ellipse != null) ellipses.add(ellipse);
         }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_dark_filter_contours.png", imageWithContoursDetected);
-
         return ellipses;
     }
 
@@ -308,25 +315,14 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
 
     private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
     {
-        Mat filteredImage = getFilteredImage(centroid * 16, 1, image);
+        Mat filteredImage = getFilteredImage(centroid * 16, FILTER_OVER, image);
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter.png", filteredImage);
         Mat dilatedImage = new Mat();
         // Imgproc.dilate(src, dst, kernel, anchor, iterations, borderType, borderValue);
         Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
 
-        List<MatOfPoint> contours = findContoursIn(dilatedImage);
-        Mat imageWithContoursDetected = image.clone();
-        Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(0, 0, 0), 2);
-
-        List<RotatedRect> ellipses = new ArrayList<>();
-        for (MatOfPoint contour : contours) {
-            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contour);
-            if (ellipse != null) ellipses.add(ellipse);
-        }
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_light_filter_eontours.png", imageWithContoursDetected);
-
-        return ellipses;
+        return findPossibleEllipsesIn(dilatedImage, "light");
     }
 
 }
