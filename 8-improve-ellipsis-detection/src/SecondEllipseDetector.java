@@ -69,20 +69,17 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         // https://stackoverflow.com/questions/44386786/k-means-clustering-for-color-based-segmentation-using-opencv-in-android
         // Core.kmeans(data, K, bestLabels, criteria, attempts, flags, centers);
         Core.kmeans(histogram.t(), numberOfClusters, labels, criteria, 10, Core.KMEANS_RANDOM_CENTERS, centers);
-        // System.out.println("centers =");
-        // System.out.println(centers.dump());
-        // System.out.println("labels =");
-        // System.out.println(labels.t().dump());
 
         // Centroid 0 centers around the dark pixels and centroid 1 around the light ones
         int[] centroids = clusterizeHistogramAndReturnCentroids(histogram, numberOfClusters);
+
         List<RotatedRect> darkEllipses = getPossibleEllipsesByFilteringBelow(centroids[0], preprocessedImage);
         List<RotatedRect> lightEllipses = getPossibleEllipsesByFilteringOver(centroids[1], preprocessedImage);
         List<RotatedRect> ellipses = new ArrayList<>();
         ellipses.addAll(darkEllipses);
         ellipses.addAll(lightEllipses);
 
-        drawEllipses(ellipses, image);
+        outputEllipsesOnOriginalImage(ellipses);
 
         return ellipses;
     }
@@ -308,13 +305,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return contours;
     }
 
-    private void outputOriginalImageWith(List<MatOfPoint> contours, String suffix)
-    {
-        Mat imageWithContoursDetected = this.originalImage.clone();
-        Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(255, 255, 255), 2);
-        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_" + suffix + "_filter_contours.png", imageWithContoursDetected);
-    }
-
     private void removeSmallContours(List<MatOfPoint> contours)
     {
         for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext();) {
@@ -325,9 +315,16 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         }
     }
 
-    private void drawEllipses(List<RotatedRect> ellipses, Mat image)
+    private void outputOriginalImageWith(List<MatOfPoint> contours, String suffix)
     {
-        Mat imageWithEllipses = image.clone();
+        Mat imageWithContoursDetected = this.originalImage.clone();
+        Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(255, 255, 255), 2);
+        Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3_" + suffix + "_filter_contours.png", imageWithContoursDetected);
+    }
+
+    private void outputEllipsesOnOriginalImage(List<RotatedRect> ellipses)
+    {
+        Mat imageWithEllipses = this.originalImage.clone();
         for (RotatedRect ellipse : ellipses) {
             Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
         }
