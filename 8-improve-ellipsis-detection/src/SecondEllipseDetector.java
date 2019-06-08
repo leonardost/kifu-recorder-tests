@@ -144,42 +144,41 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
 
     private int[] clusterizeHistogramAndReturnCentroids(Mat histogram, int numberOfClusters)
     {
-        if (numberOfClusters < 2) {
-            // This number should be at least 2
-            return null;
-        }
+        // There should be at least 2 clusters
+        if (numberOfClusters < 2) return null;
 
         int numberOfRows = histogram.rows();
         int[] centroids = new int[numberOfClusters];
+        int[] oldCentroids = new int[numberOfClusters];
 
         // Let's initialize the centroids at each extreme of the histogram
         centroids[0] = 0;
+        oldCentroids[0] = centroids[0];
         centroids[1] = numberOfRows - 1;
+        oldCentroids[1] = centroids[1];
         if (numberOfClusters > 2) {
             centroids[2] = numberOfRows / 2;
+            oldCentroids[2] = centroids[2];
         }
 
         boolean converged = false;
         int[] labels = new int[numberOfRows];
-        int[] oldCentroids = new int[numberOfClusters];
-        oldCentroids[0] = 0;
-        oldCentroids[1] = numberOfRows - 1;
-        oldCentroids[2] = numberOfRows / 2;
 
         while (!converged) {
             int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
 
+            // Calculate distances of each row to each centroid
             for (int i = 0; i < numberOfClusters; i++) {
-                for (int j = 0; j < numberOfRows; j++) {
-                    distancesToCentroids[i][ centroids[i] ] = 0;
-                    for (int k = centroids[i] - 1; k >= 0; k--) {
-                        distancesToCentroids[i][k] = distancesToCentroids[i][k + 1]
-                            + (int)histogram.get(k, 0)[0] * (centroids[i] - k);
-                    }
-                    for (int k = centroids[i] + 1; k < histogram.rows(); k++) {
-                        distancesToCentroids[i][k] = distancesToCentroids[i][k - 1]
-                            + (int)histogram.get(k, 0)[0] * (k - centroids[i]);
-                    } 
+                distancesToCentroids[i][ centroids[i] ] = 0;
+                for (int k = centroids[i] - 1; k >= 0; k--) {
+                    distancesToCentroids[i][k] =
+                        distancesToCentroids[i][k + 1]
+                        + (int)histogram.get(k, 0)[0] * (centroids[i] - k);
+                }
+                for (int k = centroids[i] + 1; k < histogram.rows(); k++) {
+                    distancesToCentroids[i][k] =
+                        distancesToCentroids[i][k - 1]
+                        + (int)histogram.get(k, 0)[0] * (k - centroids[i]);
                 }
             }
 
@@ -190,39 +189,39 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
             //         System.out.println("Distance to row " + j + " = " + distancesToCentroids[i][j]);
             //     }
             // }
-            System.out.println("-------");
+            // System.out.println("-------");
 
             int[] sumOfElementsOfEachCluster = new int[numberOfClusters];
 
-            for (int i = 0; i < numberOfRows; i++) {
+            // Set label of each row
+            for (int row = 0; row < numberOfRows; row++) {
                 int smallestDistance = 999999999;
                 int nearestCluster = -1;
-                for (int j = 0; j < numberOfClusters; j++) {
-                    if (distancesToCentroids[j][i] < smallestDistance) {
-                        smallestDistance = distancesToCentroids[j][i];
-                        nearestCluster = j;
+                for (int cluster = 0; cluster < numberOfClusters; cluster++) {
+                    if (distancesToCentroids[cluster][row] < smallestDistance) {
+                        smallestDistance = distancesToCentroids[cluster][row];
+                        nearestCluster = cluster;
                     }
                 }
-                sumOfElementsOfEachCluster[ nearestCluster ] += histogram.get(i, 0)[0];
-
-                labels[i] = nearestCluster;
+                sumOfElementsOfEachCluster[ nearestCluster ] += histogram.get(row, 0)[0];
+                labels[row] = nearestCluster;
             }
 
             converged = true;
 
-            for (int i = 0; i < numberOfClusters; i++) {
+            for (int cluster = 0; cluster < numberOfClusters; cluster++) {
                 int sum = 0;
-                int medianOfCluster = sumOfElementsOfEachCluster[i] / 2;
+                int medianOfCluster = sumOfElementsOfEachCluster[cluster] / 2;
 
-                for (int j = 0; j < numberOfRows; j++) {
-                    if (labels[j] != i) continue;
+                for (int row = 0; row < numberOfRows; row++) {
+                    if (labels[row] != cluster) continue;
 
-                    sum += histogram.get(j, 0)[0];
+                    sum += histogram.get(row, 0)[0];
 
                     if (sum >= medianOfCluster) {
-                        System.out.println("Centroid " + i + " is now " + j);
-                        if (centroids[i] != j) converged = false;
-                        centroids[i] = j;
+                        // System.out.println("Centroid " + cluster + " is now " + row);
+                        if (centroids[cluster] != row) converged = false;
+                        centroids[cluster] = row;
                         break;
                     }
                 }
@@ -233,7 +232,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         for (int i = 0; i < numberOfRows; i++) {
             System.out.println("Row " + i + " label = " + labels[i]);
         }
-
         System.out.println("Centroids = ");
         for (int i = 0; i < numberOfClusters; i++) {
             System.out.println(i + " - " + centroids[i]);
