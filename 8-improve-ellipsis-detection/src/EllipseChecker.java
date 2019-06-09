@@ -18,15 +18,21 @@ import org.opencv.imgproc.Imgproc;
 public class EllipseChecker
 {
     private Mat image;
+    private MatOfPoint approximatedContour = null;
 
     public void setImage(Mat image)
     {
         this.image = image;
     }
 
+    public MatOfPoint getApproximatedContour()
+    {
+        return approximatedContour;
+    }
+
     public RotatedRect getEllipseFrom(MatOfPoint contour)
     {
-        MatOfPoint approximatedContour = approximateContour(contour);
+        approximatedContour = approximateContour(contour);
         if (!canContourBeAnEllipse(approximatedContour)) return null;
         RotatedRect ellipse = fitEllipseInContour(contour); 
         if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;

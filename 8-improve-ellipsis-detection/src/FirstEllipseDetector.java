@@ -4,7 +4,6 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
@@ -64,8 +63,12 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
         outputImageWithContours(image, contours, "processing/image" + imageIndex + "_all_contours.jpg");
         List<RotatedRect> ellipses = new ArrayList<>();
 
+        EllipseChecker ellipseChecker = new EllipseChecker();
+        ellipseChecker.setImage(this.image);
+
         for (int i = 0; i < contours.size(); i++) {
-            RotatedRect ellipse = getEllipseFrom(contours.get(i));
+            RotatedRect ellipse = ellipseChecker.getEllipseFrom(contours.get(i));
+            approximatedContours.add(ellipseChecker.getApproximatedContour());
             if (ellipse == null) continue;
 
             // Let's increase the ellipse size to encompass the entire stone and some more
@@ -139,63 +142,6 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
         }
 
         Imgcodecs.imwrite(filename, imageWithContoursDetected);
-    }
-
-    private RotatedRect getEllipseFrom(MatOfPoint contour)
-    {
-        MatOfPoint approximatedContour = approximateContour(contour);
-        if (!canContourBeAnEllipse(approximatedContour)) return null;
-        approximatedContours.add(approximatedContour);
-        RotatedRect ellipse = fitEllipseInContour(contour); 
-        if (!isEllipseAGoodFitAgainstContour(ellipse, contour)) return null;
-
-        return ellipse;
-    }
-
-    // A contour that can be an ellipse must be convex and have at least 5 sides
-    private boolean canContourBeAnEllipse(MatOfPoint contour)
-    {
-        return Imgproc.isContourConvex(contour) && contour.rows() >= 5;
-    }
-
-    private MatOfPoint approximateContour(MatOfPoint contour)
-    {
-        MatOfPoint2f contour2f = new MatOfPoint2f();
-        MatOfPoint2f approx2f = new MatOfPoint2f();
-        contour.convertTo(contour2f, CvType.CV_32FC2);
-        // The lower epsilon is, the more exact the approximation has to be
-        Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.03, true);
-        MatOfPoint approx = new MatOfPoint();
-        approx2f.convertTo(approx, CvType.CV_32S);
-        return approx;
-    }
-
-    private RotatedRect fitEllipseInContour(MatOfPoint contour) {
-        MatOfPoint2f contour2f = new MatOfPoint2f();
-        contour.convertTo(contour2f, CvType.CV_32FC2);
-        return Imgproc.fitEllipse(contour2f);
-    }
-
-    private boolean isEllipseAGoodFitAgainstContour(RotatedRect ellipse, MatOfPoint contour) {
-        // We plot a mask of the contour we are checking
-        Mat maskContour = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        List<MatOfPoint> contours = new ArrayList<>();
-        contours.add(contour);
-        Imgproc.drawContours(maskContour, contours, 0, new Scalar(255), -1);
-        // We then plot the found ellipse
-        Mat maskEllipse = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        Imgproc.ellipse(maskEllipse, ellipse, new Scalar(255), -1);
-        // we check the pixels that are only in one or the other image
-        Mat leftover = new Mat(image.rows(), image.cols(), CvType.CV_8U, new Scalar(0));
-        // The leftover is the difference between the contour found and the ellipse we're trying to fit.
-        // The less leftover there is, the more the ellipse fits the contour.
-        Core.bitwise_xor(maskContour, maskEllipse, leftover);
-
-        int leftoverCount = Core.countNonZero(leftover);
-        int maskEllipseCount = Core.countNonZero(maskEllipse);
-        double leftoverRatio = (double)leftoverCount / (double)maskEllipseCount;
-
-        return leftoverRatio < 0.15;
     }
 
 }

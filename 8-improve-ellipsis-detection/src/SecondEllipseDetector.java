@@ -15,6 +15,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -59,16 +60,16 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         System.out.println("histogram with 16 bins = ");
         System.out.println(histogram.t().dump());
 
-        // Clsuterize these points using k-means
-        // https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_ml/py_kmeans/py_kmeans_opencv/py_kmeans_opencv.html
-        // https://docs.opencv.org/3.4/d1/d5c/tutorial_py_kmeans_opencv.html
+        // // Clsuterize these points using k-means
+        // // https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_ml/py_kmeans/py_kmeans_opencv/py_kmeans_opencv.html
+        // // https://docs.opencv.org/3.4/d1/d5c/tutorial_py_kmeans_opencv.html
         int numberOfClusters = 3;
-        Mat labels = new Mat();
-        Mat centers = new Mat();
-        TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 100, 1);
-        // https://stackoverflow.com/questions/44386786/k-means-clustering-for-color-based-segmentation-using-opencv-in-android
-        // Core.kmeans(data, K, bestLabels, criteria, attempts, flags, centers);
-        Core.kmeans(histogram.t(), numberOfClusters, labels, criteria, 10, Core.KMEANS_RANDOM_CENTERS, centers);
+        // Mat labels = new Mat();
+        // Mat centers = new Mat();
+        // TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 100, 1);
+        // // https://stackoverflow.com/questions/44386786/k-means-clustering-for-color-based-segmentation-using-opencv-in-android
+        // // Core.kmeans(data, K, bestLabels, criteria, attempts, flags, centers);
+        // Core.kmeans(histogram.t(), numberOfClusters, labels, criteria, 10, Core.KMEANS_RANDOM_CENTERS, centers);
 
         // Centroid 0 centers around the dark pixels and centroid 1 around the light ones
         int[] centroids = clusterizeHistogramAndReturnCentroids(histogram, numberOfClusters);
@@ -114,7 +115,6 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     }
 
     // https://docs.opencv.org/3.4/d3/dc1/tutorial_basic_linear_transform.html
-    // Adjust brightness and contrast
     private Mat adjustBrightnessAndContrast(Mat image)
     {
         Mat adjustedImage = new Mat();
@@ -128,16 +128,16 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     }
 
     // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=calcHist
-    // Get histogram from image
     private Mat getHistogramFrom(Mat image, int numberOfBins)
     {
         Mat histogram = new Mat();
-        List<Mat> images = new ArrayList<>();
-        images.add(image);
-        MatOfInt histogramSize = new MatOfInt(numberOfBins); // number of bins
+        MatOfInt channels = new MatOfInt(0);
+        Mat mask = new Mat();
+        MatOfInt histogramSize = new MatOfInt(numberOfBins);
         MatOfFloat ranges = new MatOfFloat(0f, 256f);
-        // Imgproc.calcHist(images, channels, mask, hist, histSize, ranges);
-        Imgproc.calcHist(images, new MatOfInt(0), new Mat(), histogram, histogramSize, ranges);
+
+        Imgproc.calcHist(new ArrayList<Mat>(Arrays.asList(image)), channels, mask, histogram, histogramSize, ranges);
+
         return histogram;
     }
 
