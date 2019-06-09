@@ -118,10 +118,10 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     private Mat adjustBrightnessAndContrast(Mat image)
     {
         Mat adjustedImage = new Mat();
+        int rType = -1;
         double alpha = 1.4; // contrast
         int beta = -50; // brightness
-        // image.convertTo(m, rtype, alpha, beta);
-        image.convertTo(adjustedImage, -1, alpha, beta);
+        image.convertTo(adjustedImage, rType, alpha, beta);
         Imgcodecs.imwrite("processing/second-filter_image" + imageIndex + "_preprocessed_image_3.jpg", adjustedImage);
         // Don't know if Gamma correction is needed
         return adjustedImage;
@@ -167,28 +167,19 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
             int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
 
             // Calculate distances of each row to each centroid
-            for (int i = 0; i < numberOfClusters; i++) {
-                distancesToCentroids[i][ centroids[i] ] = 0;
-                for (int k = centroids[i] - 1; k >= 0; k--) {
-                    distancesToCentroids[i][k] =
-                        distancesToCentroids[i][k + 1]
-                        + (int)histogram.get(k, 0)[0] * (centroids[i] - k);
+            for (int cluster = 0; cluster < numberOfClusters; cluster++) {
+                distancesToCentroids[cluster][ centroids[cluster] ] = 0;
+                for (int row = centroids[cluster] - 1; row >= 0; row--) {
+                    distancesToCentroids[cluster][row] =
+                        distancesToCentroids[cluster][row + 1]
+                        + (int)histogram.get(row, 0)[0] * (centroids[cluster] - row);
                 }
-                for (int k = centroids[i] + 1; k < histogram.rows(); k++) {
-                    distancesToCentroids[i][k] =
-                        distancesToCentroids[i][k - 1]
-                        + (int)histogram.get(k, 0)[0] * (k - centroids[i]);
+                for (int row = centroids[cluster] + 1; row < histogram.rows(); row++) {
+                    distancesToCentroids[cluster][row] =
+                        distancesToCentroids[cluster][row - 1]
+                        + (int)histogram.get(row, 0)[0] * (row - centroids[cluster]);
                 }
             }
-
-            // System.out.println("Distances = ");
-            // for (int i = 0; i < numberOfClusters; i++) {
-            //     System.out.println("Centroid " + i + ", which is " + centroids[i]);
-            //     for (int j = 0; j < numberOfRows; j++) {
-            //         System.out.println("Distance to row " + j + " = " + distancesToCentroids[i][j]);
-            //     }
-            // }
-            // System.out.println("-------");
 
             int[] sumOfElementsOfEachCluster = new int[numberOfClusters];
 
