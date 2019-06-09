@@ -164,23 +164,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         int[] labels = new int[numberOfRows];
 
         while (!converged) {
-            int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
-
-            // Calculate distances of each row to each centroid
-            for (int cluster = 0; cluster < numberOfClusters; cluster++) {
-                distancesToCentroids[cluster][ centroids[cluster] ] = 0;
-                for (int row = centroids[cluster] - 1; row >= 0; row--) {
-                    distancesToCentroids[cluster][row] =
-                        distancesToCentroids[cluster][row + 1]
-                        + (int)histogram.get(row, 0)[0] * (centroids[cluster] - row);
-                }
-                for (int row = centroids[cluster] + 1; row < histogram.rows(); row++) {
-                    distancesToCentroids[cluster][row] =
-                        distancesToCentroids[cluster][row - 1]
-                        + (int)histogram.get(row, 0)[0] * (row - centroids[cluster]);
-                }
-            }
-
+            int[][] distancesToCentroids = calculateDistanceOfEachRowToCentroids(histogram, centroids);
             int[] sumOfElementsOfEachCluster = new int[numberOfClusters];
 
             // Set label of each row
@@ -228,6 +212,30 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         }
 
         return centroids;
+    }
+
+    private int[][] calculateDistanceOfEachRowToCentroids(Mat histogram, int[] centroids)
+    {
+        int numberOfRows = histogram.rows();
+        int numberOfClusters = centroids.length;
+        int[][] distancesToCentroids = new int[numberOfClusters][numberOfRows];
+
+        for (int cluster = 0; cluster < numberOfClusters; cluster++) {
+            distancesToCentroids[cluster][ centroids[cluster] ] = 0;
+
+            for (int row = centroids[cluster] - 1; row >= 0; row--) {
+                distancesToCentroids[cluster][row] =
+                    distancesToCentroids[cluster][row + 1]
+                    + (int)histogram.get(row, 0)[0] * (centroids[cluster] - row);
+            }
+            for (int row = centroids[cluster] + 1; row < histogram.rows(); row++) {
+                distancesToCentroids[cluster][row] =
+                    distancesToCentroids[cluster][row - 1]
+                    + (int)histogram.get(row, 0)[0] * (row - centroids[cluster]);
+            }
+        }
+
+        return distancesToCentroids;
     }
 
     private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
