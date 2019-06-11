@@ -257,10 +257,10 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         return findPossibleEllipsesIn(dilatedImage, "light");
     }
 
+    // There are 256 possible pixel intensities and the histogram has 16 bins,
+    // so each bin represents a reange of 16 pixels
     private Mat getFilteredImage(int threshold, int filter, Mat image)
     {
-        // There are 256 possible pixel intensities and the histogram has 16 bins,
-        // so each bin represents a reange of 16 pixels
         Mat filteredImage = image.clone();
 
         for (int i = 0; i < image.rows(); i++) {
