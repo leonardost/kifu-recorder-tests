@@ -234,7 +234,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     private List<RotatedRect> getPossibleEllipsesByFilteringOver(int centroid, Mat image)
     {
         Mat filteredImage = getFilteredImage(centroid * 16, FILTER_OVER, image);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter.png", filteredImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter.png", filteredImage);
         Mat dilatedImage = new Mat();
         Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
         Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
@@ -303,7 +303,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     {
         Mat imageWithContoursDetected = this.originalImage.clone();
         Imgproc.drawContours(imageWithContoursDetected, contours, -1, new Scalar(255, 255, 255), 2);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_" + suffix + "_filter_contours.png", imageWithContoursDetected);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_" + suffix + "_filter_contours.png", imageWithContoursDetected);
     }
 
     private void outputEllipsesOnOriginalImage(List<RotatedRect> ellipses)

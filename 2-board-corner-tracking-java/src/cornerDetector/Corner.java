@@ -62,10 +62,15 @@ public class Corner {
     }
 
     // Checks if a point lies too close to the stone position
+    // We increase the size of the ellipse a little to discard points
+    // that lie on the stone's edge and could be mistaken for a
+    // Harris corner point
     public boolean isTooCloseToCircle(Ponto point) {
         if (stonePosition == null) return false;
 
         RotatedRect ellipse = stonePosition.clone();
+        ellipse.size.width *= 1.2;
+        ellipse.size.height *= 1.2;
 
         // https://stackoverflow.com/questions/7946187/point-and-ellipse-rotated-position-test-algorithm
         double cos = Math.cos(Math.toRadians(ellipse.angle));

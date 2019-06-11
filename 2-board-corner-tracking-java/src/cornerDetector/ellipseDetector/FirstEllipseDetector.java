@@ -60,7 +60,7 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
 
         Mat preprocessedImage = preprocessImage(image.clone());
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
-        outputImageWithContours(image, contours, filePrefix + "_all_contours.jpg");
+        // outputImageWithContours(image, contours, filePrefix + "_all_contours.jpg");
         List<RotatedRect> ellipses = new ArrayList<>();
 
         EllipseChecker ellipseChecker = new EllipseChecker();
@@ -79,7 +79,7 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
             Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
         }
 
-        outputImageWithContours(image, approximatedContours, filePrefix + "_approximated_contours.jpg");
+        // outputImageWithContours(image, approximatedContours, filePrefix + "_approximated_contours.jpg");
         Imgcodecs.imwrite(filePrefix + "_ellipse_fit.jpg", imageWithEllipses);
 
         return ellipses;

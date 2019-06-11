@@ -24,13 +24,10 @@ public class EllipseCornerDetector implements CornerDetectorInterface {
     }
 
     public List<Corner> detectCandidateCornersIn(Mat image) {
-        Mat imageWithEllipsis = image.clone();
-        Mat preprocessedImage = image.clone();
-
         List<EllipseDetectorInterface> ellipseDetectors = new ArrayList<>();
         EllipseDetectorInterface firstEllipseDetector = new FirstEllipseDetector();
         EllipseDetectorInterface secondEllipseDetector = new SecondEllipseDetector();
-        String prefix = "processing/corner" + cornerIndex + "_image" + imageIndex;
+        String prefix = "processing/corner" + cornerIndex + "_frame" + imageIndex;
         firstEllipseDetector.setFilePrefix(prefix + "_first-filter");
         secondEllipseDetector.setFilePrefix(prefix + "_second-filter");
         ellipseDetectors.add(firstEllipseDetector);
