@@ -66,6 +66,22 @@ sequence image folders can be passed as a parameter to run the tests on them.
 Log
 ---
 
+#### 11/06/2019 20:37
+
+Commit 2371a9830214d1a63675daf57b3cb10d8c1d3444
+
+This was one of the best runs of `./compile_and_run.sh datasets/sequence-14`
+until now. The improvements with ellipse detection are shown here, where
+corners were a little more accurately detected.
+
+#### 20/08/2018 22:50
+
+Commit 65407615ae03c8a018b7dc96c827995463361228
+
+I started developing the auxiliary method that checks if the board is contained
+in the contour or not by counting the difference in the number of squares
+found.
+
 #### 19/08/2018 00:15
 
 Tests with sequences 1, 2 and 3 with algorithm 2 (java) version
@@ -75,11 +91,3 @@ correctly.
 Sequence 4 had a mistake in frame 15, and sequence 6 already had an error in
 frame 5, which persisted to the end. This may be the best subject to test
 methods to improve robustness of the corner tracking.
-
-#### 20/08/2018 22:50
-
-Commit 65407615ae03c8a018b7dc96c827995463361228
-
-I started developing the auxiliary method that checks if the board is contained
-in the contour or not by counting the difference in the number of squares
-found.
