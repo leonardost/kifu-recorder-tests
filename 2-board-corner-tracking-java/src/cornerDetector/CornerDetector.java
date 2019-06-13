@@ -42,7 +42,7 @@ public class CornerDetector {
     public Corner detectCornerIn(Mat image) {
         System.out.println("Processing corner " + cornerIndex);
         Mat regionImage = getRegionOfInterestAround(corner, image);
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + ".jpg", regionImage);
+        Imgcodecs.imwrite("processing/corner" + cornerIndex + "_frame" + imageIndex + ".png", regionImage);
 
         List<Corner> candidateCornerHarris = harrisCornerDetector.detectCandidateCornersIn(regionImage);
         List<Corner> candidateCornerEllipsis = ellipseCornerDetector.detectCandidateCornersIn(regionImage);
@@ -64,15 +64,15 @@ public class CornerDetector {
         for (Corner point : candidateCornerEllipsis) {
             System.out.println("Candidate corner found by circle detection in image " + imageIndex + ": ");
             System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 255, 0), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 1, new Scalar(0, 255, 0), -1);
             Imgproc.ellipse(imageWithCornersPlotted, point.stonePosition, new Scalar(0, 255, 255));
         }
         for (Corner point : candidateCornerHarris) {
             System.out.println("Candidate corner found by corner Harris detection in frame " + imageIndex + ": ");
             System.out.println(point);
-            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 3, new Scalar(0, 0, 255), -1);
+            Imgproc.circle(imageWithCornersPlotted, new Point(point.getX(), point.getY()), 1, new Scalar(0, 0, 255), -1);
         }
-        Imgcodecs.imwrite("processing/corner_region_" + cornerIndex + "_frame" + imageIndex + "_candidate_corners.jpg", imageWithCornersPlotted);
+        Imgcodecs.imwrite("processing/corner" + cornerIndex + "_frame" + imageIndex + "_candidate_corners.png", imageWithCornersPlotted);
 
         List<Corner> candidateCorners = new ArrayList<>();
         candidateCorners.addAll(candidateCornerHarris);

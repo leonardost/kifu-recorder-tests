@@ -57,7 +57,7 @@ public class process_image {
             }
 
             Mat ortogonalBoardImage = ImageUtils.generateOrtogonalBoardImage(image, wereAllCornersFound ? possibleNewCorners : corners);
-            Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".jpg", ortogonalBoardImage);
+            Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".png", ortogonalBoardImage);
             boardDetector.setImageIndex(imageIndex);
 
             System.out.println("Frame " + imageIndex);
@@ -228,7 +228,7 @@ public class process_image {
         Scalar red = new Scalar(0, 0, 255);
         Imgproc.drawContours(image, contourPoints, -1, red, 2);
 
-        Imgcodecs.imwrite("output/image" + imageIndex + ".jpg", image);
+        Imgcodecs.imwrite("output/image" + imageIndex + ".png", image);
     }
 
 }

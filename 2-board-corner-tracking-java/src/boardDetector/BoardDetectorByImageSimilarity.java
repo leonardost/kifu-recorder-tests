@@ -43,8 +43,8 @@ public class BoardDetectorByImageSimilarity implements BoardDetectorInterface {
     private void generateDescriptorMatches(Mat image1, Mat image2) {
         Mat processedImage1 = image1.clone();
         Mat processedImage2 = image2.clone();
-        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_1.jpg", processedImage1);
-        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_2.jpg", processedImage2);
+        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_1.png", processedImage1);
+        Imgcodecs.imwrite("processing/difference_between_" + imageIndex + "_2.png", processedImage2);
 
         FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
         MatOfKeyPoint keypointsA = new MatOfKeyPoint();

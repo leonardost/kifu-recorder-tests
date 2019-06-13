@@ -75,7 +75,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
     }
 
     private void outputImageWithBorders(Mat imageWithBordersDetected) {
-        Imgcodecs.imwrite("processing/ortogonal_with_borders_detected_" + imageIndex + ".jpg", imageWithBordersDetected);
+        Imgcodecs.imwrite("processing/ortogonal_with_borders_detected_" + imageIndex + ".png", imageWithBordersDetected);
     }
 
     private List<MatOfPoint> detectContoursIn(Mat imageWithBordersDetected) {
@@ -98,7 +98,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
     private void outputImageWithContours(Mat ortogonalBoardImage, List<MatOfPoint> contours) {
         Mat imageWithContoursDetected = ortogonalBoardImage.clone();
         Imgproc.drawContours(imageWithContoursDetected, contours, -1, RED, 2);
-        Imgcodecs.imwrite("processing/ortogonal_with_contours_detected_" + imageIndex + ".jpg", imageWithContoursDetected);
+        Imgcodecs.imwrite("processing/ortogonal_with_contours_detected_" + imageIndex + ".png", imageWithContoursDetected);
     }
 
     private List<MatOfPoint> detectQuadrilateralsAmong(List<MatOfPoint> contours) {
@@ -135,7 +135,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
             contoursList.add(quadrilateral);
             Imgproc.drawContours(imageWithQuadrilateralsDetected, contoursList, -1, BLUE, 2);
         }
-        Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".jpg", imageWithQuadrilateralsDetected);
+        Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".png", imageWithQuadrilateralsDetected);
     }
 
     private double calculateAverageAreaOf(List<MatOfPoint> quadrilaterals) {
