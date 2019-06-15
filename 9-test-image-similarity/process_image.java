@@ -3,7 +3,9 @@ import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import src.SimilarityCalculatorInterface;
 import src.TemplateMatching;
@@ -11,6 +13,7 @@ import src.TemplateMatching;
 public class process_image {
 
     static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
+
     private final static int NUMBER_OF_IMAGES = 91;
 
     public static void main(String[] args) {
@@ -22,7 +25,9 @@ public class process_image {
 
         Mat[] images = new Mat[NUMBER_OF_IMAGES];
         for (int i = 0; i < NUMBER_OF_IMAGES; i++) {
-            images[i] = readImageFile("input/", i);
+            images[i] = readImageFile("input/", i + 1);
+            images[i] = convertToGrayscale(images[i], i + 1);
+            images[i] = blur(images[i], i + 1);
         }
 
         for (int i = 0; i < similarityCalculators.size(); i++) {
@@ -48,7 +53,23 @@ public class process_image {
     }
 
     private static Mat readImageFile(String inputFolder, int imageNumber) {
-        return Imgcodecs.imread(inputFolder + "/corner2_image" + imageNumber + ".png");
+        return Imgcodecs.imread(inputFolder + "/corner2_frame" + imageNumber + ".png");
+    }
+
+    private static Mat convertToGrayscale(Mat image, int imageIndex)
+    {
+        Mat grayscaleImage = new Mat();
+        Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY, 1); // 1 channel
+        Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed1.jpg", grayscaleImage);
+        return grayscaleImage;
+    }
+
+    private static Mat blur(Mat image, int imageIndex)
+    {
+        Mat blurredImage = image.clone();
+        Imgproc.blur(blurredImage, blurredImage, new Size(5, 5));
+        Imgcodecs.imwrite("processing/image" + imageIndex + "_preprocessed2.jpg", blurredImage);
+        return blurredImage;
     }
 
 }
