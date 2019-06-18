@@ -10,6 +10,11 @@ The corner image samples are from running
 Log
 ---
 
+#### 17/06/2019 23:20
+
+Adding images 92 (doge) and 93 (apple) as baselines to check what
+results of comparisons with really different images look like.
+
 #### 13/06/2019 23:26
 
 Creating this experiment.
