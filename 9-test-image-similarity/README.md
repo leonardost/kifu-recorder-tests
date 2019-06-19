@@ -10,6 +10,14 @@ The corner image samples are from running
 Log
 ---
 
+#### 18/06/2019 20:44
+
+FinderprintMatching is very sensitive to brightness, as it compares
+pixel values directly, but it seems like a very good detector to see
+when something strange is in the scene. Images where hands appear are
+considered very different from images where only the board and stones
+are visible.
+
 #### 17/06/2019 23:20
 
 Adding images 92 (doge) and 93 (apple) as baselines to check what

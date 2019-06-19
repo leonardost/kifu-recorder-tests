@@ -6,6 +6,13 @@ import org.opencv.imgproc.Imgproc;
 
 public class TemplateMatching implements SimilarityCalculatorInterface
 {
+    private int imageNumber;
+
+    public void setImageNumber(int imageNumber)
+    {
+        this.imageNumber = imageNumber;
+    }
+
     public double calculateSimilatiryBetween(Mat image1, Mat image2)
     {
         Mat result = new Mat();
@@ -17,8 +24,13 @@ public class TemplateMatching implements SimilarityCalculatorInterface
         // Core.normalize(result, result, 0.0, 255.0, Core.NORM_INF);
         // The smaller maxVal is, the more similar the images are
         Core.MinMaxLocResult minMaxLoc = Core.minMaxLoc(result);
-        System.out.println("        " + minMaxLoc.maxLoc);
+        // System.out.println("        " + minMaxLoc.maxLoc);
         System.out.println("        " + minMaxLoc.maxVal);
         return minMaxLoc.maxVal;
+    }
+
+    public boolean areImagesSimilar(Mat image1, Mat image2)
+    {
+        return calculateSimilatiryBetween(image1, image2) < 0.01;
     }
 }

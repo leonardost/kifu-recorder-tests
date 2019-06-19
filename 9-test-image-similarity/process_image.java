@@ -8,6 +8,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import src.FingerprintMatching;
+import src.OrbFeaturesMatching;
 import src.SimilarityCalculatorInterface;
 import src.TemplateMatching;
 
@@ -22,6 +23,7 @@ public class process_image {
         List<SimilarityCalculatorInterface> similarityCalculators = new ArrayList<>();
         similarityCalculators.add(new TemplateMatching());
         similarityCalculators.add(new FingerprintMatching());
+        // similarityCalculators.add(new OrbFeaturesMatching());
 
         double similarityMatrix[][][] = new double[similarityCalculators.size()][NUMBER_OF_IMAGES][NUMBER_OF_IMAGES];
 
@@ -38,6 +40,7 @@ public class process_image {
 
             for (int imageIndex = 0; imageIndex < NUMBER_OF_IMAGES; imageIndex++) {
                 System.out.println("    Image " + (imageIndex + 1));
+                similarityCalculator.setImageNumber(imageIndex);
 
                 for (int otherImageIndex = imageIndex; otherImageIndex < NUMBER_OF_IMAGES; otherImageIndex++) {
                     similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
