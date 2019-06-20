@@ -23,7 +23,7 @@ public class process_image {
         List<SimilarityCalculatorInterface> similarityCalculators = new ArrayList<>();
         similarityCalculators.add(new TemplateMatching());
         similarityCalculators.add(new FingerprintMatching());
-        // similarityCalculators.add(new OrbFeaturesMatching());
+        similarityCalculators.add(new OrbFeaturesMatching());
 
         double similarityMatrix[][][] = new double[similarityCalculators.size()][NUMBER_OF_IMAGES][NUMBER_OF_IMAGES];
 

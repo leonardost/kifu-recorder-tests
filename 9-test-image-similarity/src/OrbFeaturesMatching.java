@@ -11,6 +11,8 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.ORB;
 
 public class OrbFeaturesMatching implements SimilarityCalculatorInterface
 {
@@ -25,19 +27,41 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
      * https://stackoverflow.com/questions/34762865/comparing-two-images-with-opencv-in-java
      * https://stackoverflow.com/questions/24569386/opencv-filtering-orb-matches
      * Copying this from experiment 3
+     * https://docs.opencv.org/master/javadoc/index.html
+     * https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
+     * https://stackoverflow.com/questions/48972082/how-should-i-replace-featuredetector-function-in-new-opencv
      */
     public double calculateSimilatiryBetween(Mat image1, Mat image2) {
-        FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
-        MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
-        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
-        detector.detect(image1, keypoints1);
-        detector.detect(image2, keypoints2);
-
-        DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        // int numberOfFeatures = 100;
+        ORB orbDetector = ORB.create();
+        MatOfKeyPoint keypointsA = new MatOfKeyPoint();
         Mat descriptorsA = new Mat();
+        orbDetector.compute(image1, keypointsA, descriptorsA);
+
+        System.out.println(keypointsA.dump());
+        System.out.println(descriptorsA.dump());
+
+        MatOfKeyPoint keypointsB = new MatOfKeyPoint();
         Mat descriptorsB = new Mat();
-        extractor.compute(image1, keypoints1, descriptorsA);
-        extractor.compute(image2, keypoints2, descriptorsB);
+        orbDetector.compute(image2, keypointsB, descriptorsB);
+
+        System.out.println(keypointsB.dump());
+        System.out.println(descriptorsB.dump());
+
+
+
+
+        // FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
+        // MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
+        // MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
+        // detector.detect(image1, keypoints1);
+        // detector.detect(image2, keypoints2);
+
+        // DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        // Mat descriptorsA = new Mat();
+        // Mat descriptorsB = new Mat();
+        // extractor.compute(image1, keypoints1, descriptorsA);
+        // extractor.compute(image2, keypoints2, descriptorsB);
 
         DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         MatOfDMatch matches = new MatOfDMatch();
