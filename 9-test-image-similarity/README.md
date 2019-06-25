@@ -10,6 +10,11 @@ The corner image samples are from running
 Log
 ---
 
+#### 25/06/2019 20:40
+
+Feature matching does not seem to work well with small images (80x80).
+Template matching and fingerprint matching did better in our tests.
+
 #### 18/06/2019 20:44
 
 FinderprintMatching is very sensitive to brightness, as it compares
