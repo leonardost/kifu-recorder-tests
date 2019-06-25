@@ -31,7 +31,7 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
      * https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
      * https://stackoverflow.com/questions/48972082/how-should-i-replace-featuredetector-function-in-new-opencv
      * 
-     * Explicação mais aprofundada sobre o método:
+     * Deeper explanation about the method:
      * https://medium.com/software-incubator/introduction-to-orb-oriented-fast-and-rotated-brief-4220e8ec40cf
      * 
      * I tested and it seems these feature detectors don't work in small images.
@@ -79,7 +79,7 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
         // descriptors might be interesting? Because in similar images, even the worst
         // descriptors should be much closer than the worst descriptors in different images.
         int numberOfDescriptorsToConsider = Math.min(15, matchesList.size());
-        System.out.println("        Number of descrptors = " + numberOfDescriptorsToConsider);
+        System.out.println("            Number of descrptors = " + numberOfDescriptorsToConsider);
         for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
             averageDistanceOfClosestDescriptors += matchesList.get(i).distance;
         }

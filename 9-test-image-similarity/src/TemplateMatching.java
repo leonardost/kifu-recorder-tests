@@ -25,7 +25,7 @@ public class TemplateMatching implements SimilarityCalculatorInterface
         // The smaller maxVal is, the more similar the images are
         Core.MinMaxLocResult minMaxLoc = Core.minMaxLoc(result);
         // System.out.println("        " + minMaxLoc.maxLoc);
-        System.out.println("        " + minMaxLoc.maxVal);
+        // System.out.println("            " + minMaxLoc.maxVal);
         return minMaxLoc.maxVal;
     }
 

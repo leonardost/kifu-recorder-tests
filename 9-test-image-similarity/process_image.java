@@ -22,7 +22,7 @@ public class process_image {
         List<SimilarityCalculatorInterface> similarityCalculators = new ArrayList<>();
         similarityCalculators.add(new TemplateMatching());
         similarityCalculators.add(new FingerprintMatching());
-        similarityCalculators.add(new OrbFeaturesMatching());
+        // similarityCalculators.add(new OrbFeaturesMatching());
 
         double similarityMatrix[][][] = new double[similarityCalculators.size()][NUMBER_OF_IMAGES][NUMBER_OF_IMAGES];
 
@@ -36,28 +36,31 @@ public class process_image {
             images[i] = blur(images[i], i + 1);
         }
 
-        for (int i = 0; i < similarityCalculators.size(); i++) {
-            SimilarityCalculatorInterface similarityCalculator = similarityCalculators.get(i);
-            System.out.println("Method " + i);
+        SimilarityCalculatorInterface similarityCalculator;
+        for (int imageIndex = 0; imageIndex < NUMBER_OF_IMAGES; imageIndex++) {
+            System.out.println("Image " + (imageIndex + 1));
 
-            for (int imageIndex = 0; imageIndex < NUMBER_OF_IMAGES; imageIndex++) {
-                System.out.println("    Image " + (imageIndex + 1));
-                similarityCalculator.setImageNumber(imageIndex);
+            for (int otherImageIndex = imageIndex; otherImageIndex < NUMBER_OF_IMAGES && otherImageIndex < imageIndex + 10; otherImageIndex++) {
+                System.out.println("    Image " + (otherImageIndex + 1));
 
-                for (int otherImageIndex = imageIndex; otherImageIndex < NUMBER_OF_IMAGES; otherImageIndex++) {
+                for (int i = 0; i < similarityCalculators.size(); i++) {
+                    similarityCalculator = similarityCalculators.get(i);
+                    similarityCalculator.setImageNumber(imageIndex);
+
                     if (i == 2) {
                         similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
                             .calculateSimilatiryBetween(originalImages[imageIndex], originalImages[otherImageIndex]);
                     } else {
                         similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
-                        .calculateSimilatiryBetween(images[imageIndex], images[otherImageIndex]);
+                            .calculateSimilatiryBetween(images[imageIndex], images[otherImageIndex]);
                     }
-                    System.out.println("        Image " + (otherImageIndex + 1) + ": " + similarityMatrix[i][imageIndex][otherImageIndex]);
-                }
 
-                System.out.println("=====================================");
-                System.out.println();
+                    System.out.println("        Method " + i + ": " + similarityMatrix[i][imageIndex][otherImageIndex]);
+                }
             }
+
+            System.out.println("=====================================");
+            System.out.println();
         }
     }
 
