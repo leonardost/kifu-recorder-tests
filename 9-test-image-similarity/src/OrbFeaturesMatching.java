@@ -30,38 +30,33 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
      * https://docs.opencv.org/master/javadoc/index.html
      * https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
      * https://stackoverflow.com/questions/48972082/how-should-i-replace-featuredetector-function-in-new-opencv
+     * 
+     * Explicação mais aprofundada sobre o método:
+     * https://medium.com/software-incubator/introduction-to-orb-oriented-fast-and-rotated-brief-4220e8ec40cf
+     * 
+     * I tested and it seems these feature detectors don't work in small images.
+     * That's why with 80x80 pictures no keypoints are found.
+     * Actually, using the original colores and unaltered images, some keypoints
+     * are found, but just a few (just 4 or so).
      */
     public double calculateSimilatiryBetween(Mat image1, Mat image2) {
         // int numberOfFeatures = 100;
         ORB orbDetector = ORB.create();
+        Mat mask = new Mat();
         MatOfKeyPoint keypointsA = new MatOfKeyPoint();
         Mat descriptorsA = new Mat();
-        orbDetector.compute(image1, keypointsA, descriptorsA);
-
-        System.out.println(keypointsA.dump());
-        System.out.println(descriptorsA.dump());
+        orbDetector.detect(image1, keypointsA);
+        orbDetector.detectAndCompute(image1, mask, keypointsA, descriptorsA);
+        // System.out.println(keypointsA.dump());
+        // System.out.println(descriptorsA.dump());
 
         MatOfKeyPoint keypointsB = new MatOfKeyPoint();
         Mat descriptorsB = new Mat();
-        orbDetector.compute(image2, keypointsB, descriptorsB);
+        orbDetector.detectAndCompute(image2, mask, keypointsB, descriptorsB);
+        // System.out.println(keypointsB.dump());
+        // System.out.println(descriptorsB.dump());
 
-        System.out.println(keypointsB.dump());
-        System.out.println(descriptorsB.dump());
-
-
-
-
-        // FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB);
-        // MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
-        // MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
-        // detector.detect(image1, keypoints1);
-        // detector.detect(image2, keypoints2);
-
-        // DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
-        // Mat descriptorsA = new Mat();
-        // Mat descriptorsB = new Mat();
-        // extractor.compute(image1, keypoints1, descriptorsA);
-        // extractor.compute(image2, keypoints2, descriptorsB);
+        if (descriptorsA.rows() == 0 || descriptorsB.rows() == 0) return 0;
 
         DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         MatOfDMatch matches = new MatOfDMatch();
@@ -83,10 +78,12 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
         // should not be labeled as similar to be marked as such. Maybe picking the worst
         // descriptors might be interesting? Because in similar images, even the worst
         // descriptors should be much closer than the worst descriptors in different images.
-        int numberOfDescriptorsToConsider = 15;
+        int numberOfDescriptorsToConsider = Math.min(15, matchesList.size());
+        System.out.println("        Number of descrptors = " + numberOfDescriptorsToConsider);
         for (int i = 0; i < numberOfDescriptorsToConsider; i++) {
             averageDistanceOfClosestDescriptors += matchesList.get(i).distance;
         }
+        if (numberOfDescriptorsToConsider == 0) return 0;
 
         return 1 - (averageDistanceOfClosestDescriptors / numberOfDescriptorsToConsider) / 100;
     }

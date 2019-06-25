@@ -19,7 +19,6 @@ public class process_image {
     private final static int NUMBER_OF_IMAGES = 93;
 
     public static void main(String[] args) {
-
         List<SimilarityCalculatorInterface> similarityCalculators = new ArrayList<>();
         similarityCalculators.add(new TemplateMatching());
         similarityCalculators.add(new FingerprintMatching());
@@ -28,7 +27,10 @@ public class process_image {
         double similarityMatrix[][][] = new double[similarityCalculators.size()][NUMBER_OF_IMAGES][NUMBER_OF_IMAGES];
 
         Mat[] images = new Mat[NUMBER_OF_IMAGES];
+        Mat[] originalImages = new Mat[NUMBER_OF_IMAGES];
+
         for (int i = 0; i < NUMBER_OF_IMAGES; i++) {
+            originalImages[i] = readImageFile("input/", i + 1);
             images[i] = readImageFile("input/", i + 1);
             images[i] = convertToGrayscale(images[i], i + 1);
             images[i] = blur(images[i], i + 1);
@@ -43,9 +45,13 @@ public class process_image {
                 similarityCalculator.setImageNumber(imageIndex);
 
                 for (int otherImageIndex = imageIndex; otherImageIndex < NUMBER_OF_IMAGES; otherImageIndex++) {
-                    similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
+                    if (i == 2) {
+                        similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
+                            .calculateSimilatiryBetween(originalImages[imageIndex], originalImages[otherImageIndex]);
+                    } else {
+                        similarityMatrix[i][imageIndex][otherImageIndex] = similarityCalculator
                         .calculateSimilatiryBetween(images[imageIndex], images[otherImageIndex]);
-                    similarityMatrix[i][otherImageIndex][imageIndex] = similarityMatrix[i][imageIndex][otherImageIndex];
+                    }
                     System.out.println("        Image " + (otherImageIndex + 1) + ": " + similarityMatrix[i][imageIndex][otherImageIndex]);
                 }
 
