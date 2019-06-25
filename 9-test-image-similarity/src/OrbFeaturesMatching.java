@@ -90,7 +90,7 @@ public class OrbFeaturesMatching implements SimilarityCalculatorInterface
 
     public boolean areImagesSimilar(Mat image1, Mat image2)
     {
-        return calculateSimilatiryBetween(image1, image2) > 0.3;
+        return calculateSimilatiryBetween(image1, image2) > 0.7;
     }
 
 }
