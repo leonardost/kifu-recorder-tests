@@ -88,17 +88,17 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
     private Mat preprocessImage(Mat image) {
         // Blur image to smooth noise
         Imgproc.blur(image, image, new Size(3, 3));
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_0.png", image);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_0.png", image);
         // Detect borders with Canny filter
         image = detectBordersIn(image);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_1.png", image);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_1.png", image);
         Imgproc.dilate(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
         Imgproc.erode(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 3);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_2.png", image);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_2.png", image);
         // Invert regions
         Core.bitwise_not(image, image);
         Imgproc.erode(image, image, Mat.ones(3, 3, CvType.CV_32F), new Point(-1, -1), 1);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3.png", image);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3.png", image);
         return image;
     }
 

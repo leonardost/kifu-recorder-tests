@@ -90,7 +90,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         Imgproc.blur(blurredImage, blurredImage, new Size(5, 5));
         Imgproc.blur(blurredImage, blurredImage, new Size(3, 3));
         Imgproc.blur(blurredImage, blurredImage, new Size(3, 3));
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_1.png", blurredImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_1.png", blurredImage);
         return blurredImage;
     }
 
@@ -98,7 +98,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     {
         Mat grayscaleImage = new Mat();
         Imgproc.cvtColor(image, grayscaleImage, Imgproc.COLOR_BGR2GRAY, 1); // 1 channel
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_2.png", grayscaleImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_2.png", grayscaleImage);
         return grayscaleImage;
     }
 
@@ -110,7 +110,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         double alpha = 1.4; // contrast
         int beta = -50; // brightness
         image.convertTo(adjustedImage, rType, alpha, beta);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3.png", adjustedImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3.png", adjustedImage);
         // Don't know if Gamma correction is needed
         return adjustedImage;
     }
@@ -226,7 +226,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
     private List<RotatedRect> getPossibleEllipsesByFilteringBelow(int centroid, Mat image)
     {
         Mat filteredImage = getFilteredImage(centroid * 16 + 16, FILTER_UNDER, image);
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_dark_filter.png", filteredImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_dark_filter.png", filteredImage);
 
         return findPossibleEllipsesIn(filteredImage, "dark");
     }
@@ -237,7 +237,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter.png", filteredImage);
         Mat dilatedImage = new Mat();
         Imgproc.dilate(filteredImage, dilatedImage, Mat.ones(5, 5, CvType.CV_8U));
-        Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
+        // Imgcodecs.imwrite(filePrefix + "_preprocessed_image_3_light_filter_dilated.png", dilatedImage);
 
         return findPossibleEllipsesIn(dilatedImage, "light");
     }
@@ -312,7 +312,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         for (RotatedRect ellipse : ellipses) {
             Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
         }
-        Imgcodecs.imwrite(filePrefix + "_ellipses.png", imageWithEllipses);
+        // Imgcodecs.imwrite(filePrefix + "_ellipses.png", imageWithEllipses);
     }
 
 }

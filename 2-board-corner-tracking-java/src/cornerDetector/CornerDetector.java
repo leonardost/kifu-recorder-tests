@@ -20,6 +20,9 @@ public class CornerDetector {
     private int cornerIndex;
     private Corner corner;
 
+    private int lastValidCornerImageIndex = -1;
+    private Mat lastValidCornerImage;
+
     private HarrisCornerDetector harrisCornerDetector = new HarrisCornerDetector();
     private EllipseCornerDetector ellipseCornerDetector = new EllipseCornerDetector();
 
@@ -78,12 +81,17 @@ public class CornerDetector {
         candidateCorners.addAll(candidateCornerHarris);
         candidateCorners.addAll(candidateCornerEllipsis);
 
+        if (lastValidCornerImageIndex == -1) {
+            lastValidCornerImageIndex = imageIndex;
+            lastValidCornerImage = regionImage.clone();
+        }
+
         // A corner should have at most 4 candidates, be them Harris corners or ellipsis corners
         // More than that probably means something is wrong in the detection, or there's something
         // else in the scene, like a player's hand or something else
         // if (candidateCorners.size() > 4) return null;
         // Having more than 4 Harris corner candidates is a bad sign
-        if (candidateCornerHarris.size() > 4) return null;
+        // if (candidateCornerHarris.size() > 4) return null;
 
         Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
 

@@ -35,22 +35,27 @@ public class process_image {
 
         int numberOfImages = cornerPositionsFile.getNumberOfImages();
         Corner[] corners = cornerPositionsFile.getInitialCornersPositions();
-
-        CornerDetector cornerDetector = new CornerDetector();
         BoardDetector boardDetector = new BoardDetector();
+
+        // Let's assign a corner detector for each corner separately,
+        // each one responsible for tracking its corner
+        CornerDetector[] cornerDetector = new CornerDetector[4];
+        for (int i = 0; i < 4; i++) {
+            cornerDetector[i] = new CornerDetector();
+        }
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
-            cornerDetector.setImageIndex(imageIndex);
 
             Corner[] possibleNewCorners = new Corner[4];
             boolean wereAllCornersFound = true;
             for (int i = 0; i < 4; i++) {
-                cornerDetector.setCornerIndex(i + 1);
-                cornerDetector.setCorner(corners[i]);
-                possibleNewCorners[i] = cornerDetector.detectCornerIn(image);
+                cornerDetector[i].setImageIndex(imageIndex);
+                cornerDetector[i].setCornerIndex(i + 1);
+                cornerDetector[i].setCorner(corners[i]);
+                possibleNewCorners[i] = cornerDetector[i].detectCornerIn(image);
                 if (possibleNewCorners[i] == null) {
                     wereAllCornersFound = false;
                 }
