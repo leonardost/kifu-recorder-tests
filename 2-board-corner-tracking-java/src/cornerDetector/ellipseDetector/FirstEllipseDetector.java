@@ -80,7 +80,7 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
         }
 
         // outputImageWithContours(image, approximatedContours, filePrefix + "_approximated_contours.png");
-        Imgcodecs.imwrite(filePrefix + "_ellipse_fit.png", imageWithEllipses);
+        // Imgcodecs.imwrite(filePrefix + "_ellipse_fit.png", imageWithEllipses);
 
         return ellipses;
     }
