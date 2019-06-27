@@ -44,7 +44,31 @@ public class EllipseCornerDetector implements CornerDetectorInterface {
             }
         }
 
-        return candidateCorners;
+        return mergeEllipsesWithCloseCenters(candidateCorners);
+    }
+
+    private List<Corner> mergeEllipsesWithCloseCenters(List<Corner> candidateCorners) {
+        List<Corner> mergedCandidateCorners = new ArrayList<Corner>();
+        int DISTANCE_THRESHOLD = 10;
+
+        for (int i = 0; i < candidateCorners.size(); i++) {
+            Corner corner1 = candidateCorners.get(i);
+            boolean merged = false;
+
+            for (int j = i + 1; j < candidateCorners.size(); j++) {
+                Corner corner2 = candidateCorners.get(j);
+                if (corner1.distanceTo(corner2) < DISTANCE_THRESHOLD) {
+                    mergedCandidateCorners.add(corner1.mergeWith(corner2));
+                    merged = true;
+                }
+            }
+
+            if (!merged) {
+                mergedCandidateCorners.add(corner1);
+            }
+        }
+
+        return mergedCandidateCorners;
     }
 
 }

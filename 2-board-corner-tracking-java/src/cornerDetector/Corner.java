@@ -82,6 +82,26 @@ public class Corner {
         return (a * a / minorAxis) + (b * b / majorAxis) <= 1;
     }
 
+    public Corner mergeWith(Corner otherCorner) {
+        Corner mergedCorner = new Corner();
+
+        mergedCorner.isStone = isStone && otherCorner.isStone;
+        mergedCorner.position = new Ponto(
+            (getX() + otherCorner.getX()) / 2,
+            (getY() + otherCorner.getY()) / 2
+        );
+
+        RotatedRect averageRectangle = new RotatedRect();
+        averageRectangle.center.x = mergedCorner.position.x;
+        averageRectangle.center.y = mergedCorner.position.y;
+        averageRectangle.size.height = (stonePosition.size.height + otherCorner.stonePosition.size.height) / 2;
+        averageRectangle.size.width = (stonePosition.size.width + otherCorner.stonePosition.size.width) / 2;
+        averageRectangle.angle = (stonePosition.angle + otherCorner.stonePosition.angle) / 2;
+        mergedCorner.stonePosition = averageRectangle;
+
+        return mergedCorner;
+    }
+
     public String toString() {
         return position.toString() + " (is" + (!isStone ? " not " : " ") + "stone)";
     }
