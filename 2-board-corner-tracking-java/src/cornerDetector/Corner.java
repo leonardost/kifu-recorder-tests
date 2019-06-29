@@ -94,8 +94,8 @@ public class Corner {
         RotatedRect averageRectangle = new RotatedRect();
         averageRectangle.center.x = mergedCorner.position.x;
         averageRectangle.center.y = mergedCorner.position.y;
-        averageRectangle.size.height = (stonePosition.size.height + otherCorner.stonePosition.size.height) / 2;
-        averageRectangle.size.width = (stonePosition.size.width + otherCorner.stonePosition.size.width) / 2;
+        averageRectangle.size.height = Math.max(stonePosition.size.height, otherCorner.stonePosition.size.height);
+        averageRectangle.size.width = Math.max(stonePosition.size.width, otherCorner.stonePosition.size.width);
         averageRectangle.angle = (stonePosition.angle + otherCorner.stonePosition.angle) / 2;
         mergedCorner.stonePosition = averageRectangle;
 

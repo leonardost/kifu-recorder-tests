@@ -1,7 +1,9 @@
 package src.cornerDetector;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.opencv.core.Mat;
 import org.opencv.core.RotatedRect;
@@ -49,21 +51,24 @@ public class EllipseCornerDetector implements CornerDetectorInterface {
 
     private List<Corner> mergeEllipsesWithCloseCenters(List<Corner> candidateCorners) {
         List<Corner> mergedCandidateCorners = new ArrayList<Corner>();
-        int DISTANCE_THRESHOLD = 10;
+        Set<Integer> mergedCornerIndexes = new HashSet<>();
+        int DISTANCE_THRESHOLD = 50;
 
         for (int i = 0; i < candidateCorners.size(); i++) {
             Corner corner1 = candidateCorners.get(i);
-            boolean merged = false;
 
             for (int j = i + 1; j < candidateCorners.size(); j++) {
+                if (mergedCornerIndexes.contains(j)) continue;
+
                 Corner corner2 = candidateCorners.get(j);
                 if (corner1.distanceTo(corner2) < DISTANCE_THRESHOLD) {
                     mergedCandidateCorners.add(corner1.mergeWith(corner2));
-                    merged = true;
+                    mergedCornerIndexes.add(i);
+                    mergedCornerIndexes.add(j);
                 }
             }
 
-            if (!merged) {
+            if (!mergedCornerIndexes.contains(i)) {
                 mergedCandidateCorners.add(corner1);
             }
         }
