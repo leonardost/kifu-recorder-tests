@@ -12,6 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import src.Ponto;
+import src.similarityCalculator.FingerprintMatching;
+import src.similarityCalculator.SimilarityCalculatorInterface;
+import src.similarityCalculator.TemplateMatching;
 
 public class CornerDetector {
 
@@ -95,7 +98,12 @@ public class CornerDetector {
 
         Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
 
+        if (!isImageSimilarEnoughToLastValidCornerImage(regionImage)) return null;
+
         if (candidateCorner != null) {
+            lastValidCornerImageIndex = imageIndex;
+            lastValidCornerImage = regionImage.clone();
+
             Ponto upperLeftCornerOfRegionOfInterest = corner.position.add(new Ponto(-RADIUS_OF_REGION_OF_INTEREST, -RADIUS_OF_REGION_OF_INTEREST));
             Ponto newCornerPosition = candidateCorner.position.add(upperLeftCornerOfRegionOfInterest);
             return new Corner(newCornerPosition.x, newCornerPosition.y, candidateCorner.isStone);
@@ -127,6 +135,14 @@ public class CornerDetector {
             }
         }
         return neasrestCorner;
+    }
+
+    private boolean isImageSimilarEnoughToLastValidCornerImage(Mat regionImage) {
+        SimilarityCalculatorInterface templateMatching = new TemplateMatching();
+        SimilarityCalculatorInterface fingerprintMatching = new FingerprintMatching();
+
+        return templateMatching.areImagesSimilar(this.lastValidCornerImage, regionImage)
+            && fingerprintMatching.areImagesSimilar(this.lastValidCornerImage, regionImage);
     }
 
 }
