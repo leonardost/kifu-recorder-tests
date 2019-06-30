@@ -60,8 +60,14 @@ public class FirstEllipseDetector implements EllipseDetectorInterface {
 
         Mat preprocessedImage = preprocessImage(image.clone());
         List<MatOfPoint> contours = detectContoursIn(preprocessedImage);
-        // outputImageWithContours(image, contours, filePrefix + "_all_contours.png");
+        outputImageWithContours(image, contours, filePrefix + "_all_contours.png");
         List<RotatedRect> ellipses = new ArrayList<>();
+        // Ir more than 5 contours were found in the scene, there's something more than
+        // stones and the board in the scene
+        if (contours.size() > 5) {
+            System.out.println("More than 5 contours found, disregarding this image");
+            return ellipses;
+        }
 
         EllipseChecker ellipseChecker = new EllipseChecker();
         ellipseChecker.setImage(this.image);

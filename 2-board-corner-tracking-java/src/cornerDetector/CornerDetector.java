@@ -86,6 +86,7 @@ public class CornerDetector {
 
         if (lastValidCornerImageIndex == -1) {
             lastValidCornerImageIndex = imageIndex;
+            // System.out.println("lastValidCornerImageIndex = " + imageIndex);
             lastValidCornerImage = regionImage.clone();
         }
 
@@ -94,15 +95,19 @@ public class CornerDetector {
         // else in the scene, like a player's hand or something else
         if (candidateCorners.size() > 4) return null;
         // Having more than 4 Harris corner candidates is a bad sign
-        if (candidateCornerHarris.size() > 4) return null;
+        // if (candidateCornerHarris.size() > 4) return null;
 
         Corner candidateCorner = getCandidateNearestToCenterOfRegionOfInterest(candidateCorners);
 
-        if (!isImageSimilarEnoughToLastValidCornerImage(regionImage)) return null;
+        // if (!isImageSimilarEnoughToLastValidCornerImage(regionImage)) {
+        //     System.out.println("Image is too dissimilar to last valid corner image");
+        //     return null;
+        // }
 
         if (candidateCorner != null) {
             lastValidCornerImageIndex = imageIndex;
             lastValidCornerImage = regionImage.clone();
+            System.out.println("lastValidCornerImageIndex = " + imageIndex);
 
             Ponto upperLeftCornerOfRegionOfInterest = corner.position.add(new Ponto(-RADIUS_OF_REGION_OF_INTEREST, -RADIUS_OF_REGION_OF_INTEREST));
             Ponto newCornerPosition = candidateCorner.position.add(upperLeftCornerOfRegionOfInterest);
@@ -141,8 +146,13 @@ public class CornerDetector {
         SimilarityCalculatorInterface templateMatching = new TemplateMatching();
         SimilarityCalculatorInterface fingerprintMatching = new FingerprintMatching();
 
+        double similarity1 = templateMatching.calculateSimilatiryBetween(this.lastValidCornerImage, regionImage);
+        double similarity2 = fingerprintMatching.calculateSimilatiryBetween(this.lastValidCornerImage, regionImage);
+        System.out.println("similarity1 = " + similarity1);
+        System.out.println("similarity2 = " + similarity2);
+
         return templateMatching.areImagesSimilar(this.lastValidCornerImage, regionImage)
-            && fingerprintMatching.areImagesSimilar(this.lastValidCornerImage, regionImage);
+            || fingerprintMatching.areImagesSimilar(this.lastValidCornerImage, regionImage);
     }
 
 }

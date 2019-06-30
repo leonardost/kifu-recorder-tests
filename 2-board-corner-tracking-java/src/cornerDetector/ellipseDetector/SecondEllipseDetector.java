@@ -68,7 +68,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         ellipses.addAll(darkEllipses);
         ellipses.addAll(lightEllipses);
 
-        outputEllipsesOnOriginalImage(ellipses);
+        // outputEllipsesOnOriginalImage(ellipses);
 
         return ellipses;
     }
@@ -285,7 +285,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         Mat hierarchy = new Mat();
         Imgproc.findContours(image, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
         removeSmallContours(contours);
-        System.out.println("Number of contours found in scene: " + contours.size());
+        // System.out.println("Number of contours found in scene: " + contours.size());
         return contours;
     }
 
@@ -312,7 +312,7 @@ public class SecondEllipseDetector implements EllipseDetectorInterface
         for (RotatedRect ellipse : ellipses) {
             Imgproc.ellipse(imageWithEllipses, ellipse, new Scalar(0, 255, 0));
         }
-        // Imgcodecs.imwrite(filePrefix + "_ellipses.png", imageWithEllipses);
+        Imgcodecs.imwrite(filePrefix + "_ellipses.png", imageWithEllipses);
     }
 
 }
