@@ -7,6 +7,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.List;
+import java.io.File;
 import java.util.ArrayList;
 
 import src.boardDetector.BoardDetector;
@@ -23,7 +24,7 @@ public class process_image {
     // Any corner that moves at least this is considered to have moved
     private final static int MOVEMENT_THRESHOULD = 10;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         if (args.length != 1) {
             printUsage();
@@ -89,7 +90,7 @@ public class process_image {
                             }
                         }
                     } else if (possibleNewCorners[i].isStone) {
-                        // All corners moved together, so this is probably a board displacemente and we
+                        // All corners moved together, so this is probably a board displacement and we
                         // don't update the corners's relative position to the real corners
                         possibleNewCorners[i].displacementToRealCorner = corners[i].displacementToRealCorner;
                     }
@@ -127,8 +128,16 @@ public class process_image {
         System.out.println("marked in red");
     }
 
-    private static Mat readImageFile(String inputFolder, int imageNumber) {
-        return Imgcodecs.imread(inputFolder + "/frame" + imageNumber + ".jpg");
+    private static Mat readImageFile(String inputFolder, int imageNumber) throws Exception {
+        String filename = inputFolder + "/frame" + imageNumber;
+        String[] possibleExtensions = { ".jpg", ".png" };
+        for (String extension : possibleExtensions) {
+            File file = new File(filename + extension);
+            if (file.exists()) {
+                return Imgcodecs.imread(file.getAbsolutePath());
+            }
+        }
+        throw new Exception("File " + filename + " does not exist");
     }
 
     private static String padWithZeroes(int number) {
