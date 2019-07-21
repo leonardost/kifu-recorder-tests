@@ -49,6 +49,10 @@ public class process_image {
             cornerDetector[i] = new CornerDetector();
         }
 
+        // This array stores the number of frames that each corner has stayed without
+        // ellipses being detected over them. This is used for false positive checking
+        int[] numberOfFramesWithoutStone = { 0, 0, 0, 0 };
+
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
             long startTime = System.nanoTime();
@@ -110,18 +114,29 @@ public class process_image {
                 if (imageIndex <= 3 || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
                     System.out.println("New ortogonal board image is similar to last valid one");
                     for (int i = 0; i < 4; i++) {
+                        if (!possibleNewCorners[i].isStone) {
+                            numberOfFramesWithoutStone[i]++;
+                        } else {
+                            numberOfFramesWithoutStone[i] = 0;
+                        }
+
                         if (!corners[i].isStone && !possibleNewCorners[i].isStone && numberOfCornersThatMoved < 3 && numberOfEmptyCornersThatMoved == 1) {
                             // This means a single empty corner moved by itself, which is not possible. This addresses a wrong
                             // corner detection in frame 70 of sequence 16.
-                            System.out.println("This empty corner moved by itself");
+                            System.out.println("Corner " + i + " - This empty corner moved by itself");
                             continue;
                         }
-                        if (!possibleNewCorners[i].isStone && corners[i].isStone && possibleNewCorners[i].distanceTo(corners[i].getRealCornerPosition()) > MOVEMENT_THRESHOULD) {
+                        if (!possibleNewCorners[i].isStone && corners[i].isStone && possibleNewCorners[i].distanceTo(corners[i].getRealCornerPosition()) > MOVEMENT_THRESHOULD
+                            // This condition should be time based instead of frame based, something like 2 or 3 seconds or so
+                            && numberOfFramesWithoutStone[i] < 5
+                        ) {
                             // If a corner was a stone and is not anymore, the new empty corner should match the real corner
                             // position that the stone was on. This addresses a wrong corner detection in frame 74 of sequence 14.
-                            System.out.println("This now empty corner is in a wrong position");
+                            System.out.println("Corner " + i + " - This now empty corner is in a wrong position");
+                            System.out.println("Number of frames without stone = " + numberOfFramesWithoutStone[i]);
                             continue;
                         }
+
                         corners[i] = possibleNewCorners[i];
                     }
                     lastValidOrtogonalBoardImage = ortogonalBoardImage2.clone();
