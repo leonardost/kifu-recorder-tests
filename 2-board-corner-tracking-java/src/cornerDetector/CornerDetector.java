@@ -93,7 +93,7 @@ public class CornerDetector {
         // A corner should have at most 4 candidates, be them Harris corners or ellipsis corners
         // More than that probably means something is wrong in the detection, or there's something
         // else in the scene, like a player's hand or something else
-        if (candidateCorners.size() > 4) return null;
+        // if (candidateCorners.size() > 4) return null;
         // Having more than 4 Harris corner candidates is a bad sign
         // if (candidateCornerHarris.size() > 4) return null;
 

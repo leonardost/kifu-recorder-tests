@@ -22,10 +22,10 @@ public class ImageUtils {
 
         Mat boardPositionInImage = new Mat(4, 1, CvType.CV_32FC2);
         boardPositionInImage.put(0, 0,
-                corners[0].position.x, corners[0].position.y,
-                corners[1].position.x, corners[1].position.y,
-                corners[2].position.x, corners[2].position.y,
-                corners[3].position.x, corners[3].position.y);
+                corners[0].getRealCornerPosition().x, corners[0].getRealCornerPosition().y,
+                corners[1].getRealCornerPosition().x, corners[1].getRealCornerPosition().y,
+                corners[2].getRealCornerPosition().x, corners[2].getRealCornerPosition().y,
+                corners[3].getRealCornerPosition().x, corners[3].getRealCornerPosition().y);
 
         Mat transformationMatrix = Imgproc.getPerspectiveTransform(boardPositionInImage, ortogonalImageCorners);
         Imgproc.warpPerspective(image, ortogonalBoardImage, transformationMatrix, ortogonalBoardImage.size());

@@ -101,6 +101,9 @@ public class process_image {
                 System.out.println("Board is NOT inside countour");
             }
 
+            Mat ortogonalBoardImage2 = ImageUtils.generateOrtogonalBoardImage(image, corners);
+            Imgcodecs.imwrite("processing/ortogonal_2_" + padWithZeroes(imageIndex) + ".png", ortogonalBoardImage2);
+
             printCornerPositions(imageIndex, corners);
             // printDetectionError(cornerPositionsFile, imageIndex, corners);
             drawBoardContourOnImage(image, corners, imageIndex);
@@ -226,10 +229,10 @@ public class process_image {
         MatOfPoint boardContour = new MatOfPoint(boardCorners);
 
         Point[] realBoardContours = new Point[4];
-        realBoardContours[0] = new Point(corners[0].position.x - corners[0].displacementToRealCorner.x, corners[0].position.y - corners[0].displacementToRealCorner.y);
-        realBoardContours[1] = new Point(corners[1].position.x - corners[1].displacementToRealCorner.x, corners[1].position.y - corners[1].displacementToRealCorner.y);
-        realBoardContours[2] = new Point(corners[2].position.x - corners[2].displacementToRealCorner.x, corners[2].position.y - corners[2].displacementToRealCorner.y);
-        realBoardContours[3] = new Point(corners[3].position.x - corners[3].displacementToRealCorner.x, corners[3].position.y - corners[3].displacementToRealCorner.y);
+        realBoardContours[0] = new Point(corners[0].getRealCornerPosition().x, corners[0].getRealCornerPosition().y);
+        realBoardContours[1] = new Point(corners[1].getRealCornerPosition().x, corners[1].getRealCornerPosition().y);
+        realBoardContours[2] = new Point(corners[2].getRealCornerPosition().x, corners[2].getRealCornerPosition().y);
+        realBoardContours[3] = new Point(corners[3].getRealCornerPosition().x, corners[3].getRealCornerPosition().y);
         MatOfPoint realBoardContour = new MatOfPoint(realBoardContours);
 
         List<MatOfPoint> realContourPoints = new ArrayList<MatOfPoint>();
