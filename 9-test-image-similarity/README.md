@@ -7,6 +7,14 @@ The corner image samples are from running
 `./compile_and_run.sh datasets/sequence-14` on experiment 2 on commit
 9a4513a022f649b319faf63034c2dfdcd93395a6.
 
+Input images in folder `input2` were obtained by running
+`./compile_and_run.sh datasets/sequence-16` on experiment 2 on commit
+ef51c5c2f2091b0977a0898c2fb2fd1ba80f3b95.
+
+Input images in folder `input3` were obtained by running
+`./compile_and_run.sh datasets/sequence-14` on experiment 2 on commit
+acdd7d04c2f74b4507cdadba44585f95010358a6
+
 Log
 ---
 
