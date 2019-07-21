@@ -66,6 +66,14 @@ sequence image folders can be passed as a parameter to run the tests on them.
 Log
 ---
 
+#### 20/06/2019 23:19
+
+Commit ef51c5c2f2091b0977a0898c2fb2fd1ba80f3b95
+
+Running `./compile_and_run.sh datasets/sequence-16` yields very good results.
+Corner 4 of frame 57 and corner 3 of frame 70 are the only images which
+should be ignored because they contain hands and misplace the board contour.
+
 #### 11/06/2019 20:37
 
 Commit 2371a9830214d1a63675daf57b3cb10d8c1d3444

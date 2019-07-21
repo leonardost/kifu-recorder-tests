@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import src.boardDetector.BoardDetector;
 import src.cornerDetector.Corner;
 import src.cornerDetector.CornerDetector;
+import src.similarityCalculator.FingerprintMatching;
+import src.similarityCalculator.SimilarityCalculatorInterface;
 import src.Ponto;
 import src.ImageUtils;
 
@@ -37,6 +39,8 @@ public class process_image {
         int numberOfImages = cornerPositionsFile.getNumberOfImages();
         Corner[] corners = cornerPositionsFile.getInitialCornersPositions();
         BoardDetector boardDetector = new BoardDetector();
+        SimilarityCalculatorInterface fingerprintMatching = new FingerprintMatching();
+        Mat lastValidOrtogonalBoardImage = null;
 
         // Let's assign a corner detector for each corner separately,
         // each one responsible for tracking its corner
@@ -72,6 +76,9 @@ public class process_image {
                 System.out.println("Board is inside countour");
                 int numberOfCornersThatMoved = getNumberOfCornersThatMoved(possibleNewCorners, corners);
                 System.out.println("Number of corners that moved: " + numberOfCornersThatMoved);
+                int numberOfEmptyCornersThatMoved = getNumberOfEmptyCornersThatMoved(possibleNewCorners, corners);
+                System.out.println("Number of empty corners that moved: " + numberOfCornersThatMoved);
+
                 double[] distanceToNewPoint = new double[4];
                 for (int i = 0; i < 4; i++) {
                     distanceToNewPoint[i] = possibleNewCorners[i].distanceTo(corners[i]);
@@ -94,9 +101,32 @@ public class process_image {
                         // don't update the corners's relative position to the real corners
                         possibleNewCorners[i].displacementToRealCorner = corners[i].displacementToRealCorner;
                     }
-
-                    corners[i] = possibleNewCorners[i];
                 }
+
+                Mat ortogonalBoardImage2 = ImageUtils.generateOrtogonalBoardImage(image, possibleNewCorners);
+                double similarity = lastValidOrtogonalBoardImage != null ? fingerprintMatching.calculateSimilatiryBetween(lastValidOrtogonalBoardImage, ortogonalBoardImage2) : -1;
+                System.out.println("Similarity between new ortogonal board image to last valid one = " + similarity);
+
+                if (lastValidOrtogonalBoardImage == null || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
+                    System.out.println("New ortogonal board image is similar to last valid one");
+                    for (int i = 0; i < 4; i++) {
+                        if (!corners[i].isStone && !possibleNewCorners[i].isStone && numberOfCornersThatMoved < 3 && numberOfEmptyCornersThatMoved == 1) {
+                            // This means a single empty corner moved by itself, which is not possible
+                            System.out.println("This empty corner moved by itself");
+                            continue;
+                        }
+                        if (!possibleNewCorners[i].isStone && corners[i].isStone && possibleNewCorners[i].distanceTo(corners[i].getRealCornerPosition()) > MOVEMENT_THRESHOULD) {
+                            // If a corner was a stone and is not anymore, the new empty corner should match the real corner
+                            // position that the stone was on
+                            continue;
+                        }
+                        corners[i] = possibleNewCorners[i];
+                    }
+                    lastValidOrtogonalBoardImage = ortogonalBoardImage2.clone();
+                } else {
+                    System.out.println("New ortogonal board image is NOT similar to last valid one");
+                }
+
             } else {
                 System.out.println("Board is NOT inside countour");
             }
@@ -209,6 +239,18 @@ public class process_image {
             }
         }
         return numberOfCornersThatMoved;
+    }
+
+    private static int getNumberOfEmptyCornersThatMoved(Corner[] possibleNewCorners, Corner[] corners) {
+        int numberOfEmptyCornersThatMoved = 0;
+        for (int i = 0; i < 4; i++) {
+            if (!possibleNewCorners[i].isStone
+                    // && !corners[i].isStone
+                    && possibleNewCorners[i].distanceTo(corners[i]) > MOVEMENT_THRESHOULD) {
+                numberOfEmptyCornersThatMoved++;
+            }
+        }
+        return numberOfEmptyCornersThatMoved;
     }
 
     private static void printDetectionError(CornerPositionsFile cornerPositionsFile, int imageIndex, Corner[] corners) {

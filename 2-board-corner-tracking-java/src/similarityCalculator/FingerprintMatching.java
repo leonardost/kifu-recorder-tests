@@ -26,7 +26,7 @@ public class FingerprintMatching implements SimilarityCalculatorInterface
         Mat smallImage2 = new Mat();
         Imgproc.resize(image1, smallImage1, new Size(16, 16));
         Imgproc.resize(image2, smallImage2, new Size(16, 16));
-        Imgcodecs.imwrite("processing/image" + imageNumber + "_small1.png", smallImage1);
+        // Imgcodecs.imwrite("processing/image" + imageNumber + "_small1.png", smallImage1);
 
         int numberOfSimilarPixels = calculateNumberOfSimilarPixelsBetween(smallImage1, smallImage2);
         // System.out.println("            number of similar pixels = " + numberOfSimilarPixels);
