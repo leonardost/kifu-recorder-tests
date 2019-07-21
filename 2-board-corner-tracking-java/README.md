@@ -66,7 +66,14 @@ sequence image folders can be passed as a parameter to run the tests on them.
 Log
 ---
 
-#### 20/06/2019 23:19
+#### 21/07/2019 01:12
+
+Commit 24fe7412e45efffbe48d454853f823d86783c58b
+
+Tests with sequence 14 and 16 show very good results. The problems with corner
+4 of frame 57 and corner 3 of frame 70 in sequence 16 are solved now.
+
+#### 20/07/2019 23:19
 
 Commit ef51c5c2f2091b0977a0898c2fb2fd1ba80f3b95
 
