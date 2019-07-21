@@ -111,13 +111,15 @@ public class process_image {
                     System.out.println("New ortogonal board image is similar to last valid one");
                     for (int i = 0; i < 4; i++) {
                         if (!corners[i].isStone && !possibleNewCorners[i].isStone && numberOfCornersThatMoved < 3 && numberOfEmptyCornersThatMoved == 1) {
-                            // This means a single empty corner moved by itself, which is not possible
+                            // This means a single empty corner moved by itself, which is not possible. This addresses a wrong
+                            // corner detection in frame 70 of sequence 16.
                             System.out.println("This empty corner moved by itself");
                             continue;
                         }
                         if (!possibleNewCorners[i].isStone && corners[i].isStone && possibleNewCorners[i].distanceTo(corners[i].getRealCornerPosition()) > MOVEMENT_THRESHOULD) {
                             // If a corner was a stone and is not anymore, the new empty corner should match the real corner
-                            // position that the stone was on
+                            // position that the stone was on. This addresses a wrong corner detection in frame 74 of sequence 14.
+                            System.out.println("This now empty corner is in a wrong position");
                             continue;
                         }
                         corners[i] = possibleNewCorners[i];
