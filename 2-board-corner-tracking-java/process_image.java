@@ -107,7 +107,7 @@ public class process_image {
                 double similarity = lastValidOrtogonalBoardImage != null ? fingerprintMatching.calculateSimilatiryBetween(lastValidOrtogonalBoardImage, ortogonalBoardImage2) : -1;
                 System.out.println("Similarity between new ortogonal board image to last valid one = " + similarity);
 
-                if (lastValidOrtogonalBoardImage == null || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
+                if (imageIndex <= 3 || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
                     System.out.println("New ortogonal board image is similar to last valid one");
                     for (int i = 0; i < 4; i++) {
                         if (!corners[i].isStone && !possibleNewCorners[i].isStone && numberOfCornersThatMoved < 3 && numberOfEmptyCornersThatMoved == 1) {
