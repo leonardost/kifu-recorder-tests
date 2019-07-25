@@ -52,6 +52,8 @@ public class process_image {
         // This array stores the number of frames that each corner has stayed without
         // ellipses being detected over them. This is used for false positive checking
         int[] numberOfFramesWithoutStone = { 0, 0, 0, 0 };
+        // This is also used to bring the detector back when it's strayed too far away
+        int numberOfFramesWithDissimilarOrtogonalImages = 0;
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
@@ -111,8 +113,13 @@ public class process_image {
                 double similarity = lastValidOrtogonalBoardImage != null ? fingerprintMatching.calculateSimilatiryBetween(lastValidOrtogonalBoardImage, ortogonalBoardImage2) : -1;
                 System.out.println("Similarity between new ortogonal board image to last valid one = " + similarity);
 
-                if (imageIndex <= 3 || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
-                    System.out.println("New ortogonal board image is similar to last valid one");
+                if (imageIndex <= 3 || numberOfFramesWithDissimilarOrtogonalImages >= 5 || fingerprintMatching.areImagesSimilar(lastValidOrtogonalBoardImage, ortogonalBoardImage2)) {
+                    // This condition should be time based and not frame based
+                    if (numberOfFramesWithDissimilarOrtogonalImages >= 5) {
+                        System.out.println("Forcing ortogonal image to be similar");
+                    } else {
+                        System.out.println("New ortogonal board image is similar to last valid one");
+                    }
                     for (int i = 0; i < 4; i++) {
                         if (!possibleNewCorners[i].isStone) {
                             numberOfFramesWithoutStone[i]++;
@@ -140,8 +147,11 @@ public class process_image {
                         corners[i] = possibleNewCorners[i];
                     }
                     lastValidOrtogonalBoardImage = ortogonalBoardImage2.clone();
+                    numberOfFramesWithDissimilarOrtogonalImages = 0;
+                    Imgcodecs.imwrite("processing/last_valid_ortogonal_" + padWithZeroes(imageIndex) + ".png", lastValidOrtogonalBoardImage);
                 } else {
                     System.out.println("New ortogonal board image is NOT similar to last valid one");
+                    numberOfFramesWithDissimilarOrtogonalImages++;
                 }
 
             } else {
