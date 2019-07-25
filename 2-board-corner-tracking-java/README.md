@@ -66,6 +66,14 @@ sequence image folders can be passed as a parameter to run the tests on them.
 Log
 ---
 
+#### 24/07/2019 23:52
+
+Commit 2d44d3e47cafa0e5f4fa43d264e2465bcf7404af
+
+Testes with sequence 18 showed very good results. The system can detect small
+board movements with or without stones on top of the corners and also can
+recover from some invalid detector states in which it got stuck previously.
+
 #### 21/07/2019 01:12
 
 Commit 24fe7412e45efffbe48d454853f823d86783c58b
