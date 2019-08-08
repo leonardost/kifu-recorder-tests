@@ -87,6 +87,10 @@ public class Game implements Serializable {
         return !isFirstMove() && getLastMove().color == Board.BLACK_STONE;
     }
 
+    public int getNumberOfMoves() {
+        return moves.size();
+    }
+
     public Move getLastMove() {
         if (moves.isEmpty()) return null;
         return moves.get(moves.size() - 1);

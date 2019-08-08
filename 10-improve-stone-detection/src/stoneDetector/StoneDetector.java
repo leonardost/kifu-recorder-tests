@@ -22,7 +22,7 @@ public class StoneDetector {
     // Dimensions of the board (9x9, 13x13 or 19x19)
     private int boardDimension = 0;
     // Debug information of the current state seen by the detector
-    public StringBuilder snapshot;
+    public StringBuilder snapshot = new StringBuilder();
 
     public void setBoardDimension(int boardDimension) {
         this.boardDimension = boardDimension;
@@ -64,8 +64,6 @@ public class StoneDetector {
     public Board detect(Board lastBoard, boolean canBeBlackStone, boolean canBeWhiteStone) {
         double[][] averageColors = new double[3][boardImage.channels()];
         int[] counters           = new int[3];
-
-        snapshot = new StringBuilder();
 
         getAverageColors(lastBoard, averageColors, counters);
 
@@ -378,6 +376,7 @@ public class StoneDetector {
         int x = column * (int) boardImage.size().height / (boardDimension - 1);
 
         double[] color = calculateAverageColors(y, x);
+        // Would a Gaussian average bring much improvement?
 //        double[] color = recuperarMediaGaussianaDeCores(boardImage, row, column);
         return color;
     }
@@ -434,45 +433,6 @@ public class StoneDetector {
         return corMedia;
     }
 
-    /*
-    private double[] recuperarMediaGaussianaDeCores(int y, int x) {
-        double[] color = new double[imagem.channels()];
-        for (int i = 0; i < color.length; ++i) {
-            color[i] = 0;
-        }
-        int radius = 10;
-        double contador = 0;
-
-        for (int yy = y - radius; yy <= y + radius; ++yy) {
-            if (yy < 0 || yy >= imagem.height()) continue;
-            for (int xx = x - radius; xx <= x + radius; ++xx) {
-                if (xx < 0 || xx >= imagem.width()) continue;
-                double distancia = distance(xx, yy, x, y);
-                if (distancia < radius) {
-                    double c[] = imagem.get(yy, xx);
-                    double peso = 1 / (distancia / 2 + 0.1);
-                    for (int i = 0; i < c.length; ++i) {
-                        color[i] += c[i] * peso;
-                    }
-                    contador += peso;
-                }
-            }
-        }
-
-        for (int i = 0; i < color.length; ++i) {
-            color[i] /= contador;
-        }
-
-//        Log.i("KifuRecorder", printColor(color));
-
-        return color;
-    }
-
-    private double distance(int x, int y, int x2, int y2) {
-        return Math.sqrt((x - x2) * (x - x2) + (y - y2) * (y - y2));
-    }
-    */
-
     /**
      * Checks if a certain color is closer to a black or white stone.
      *
@@ -501,16 +461,16 @@ public class StoneDetector {
 
         // If the distance to the average color is below a certain threshold, it's very probable
         // that it's an empty intersection
-        if (distanceToAverageColor < 120) {
-            return Board.EMPTY;
-        }
+        // if (distanceToAverageColor < 120) {
+        //     return Board.EMPTY;
+        // }
 
-        if (distanceToBlack < distanceToWhite) {
-            return Board.BLACK_STONE;
-        }
-        else {
-            return Board.WHITE_STONE;
-        }
+        // if (distanceToBlack < distanceToWhite) {
+        //     return Board.BLACK_STONE;
+        // }
+        // else {
+        //     return Board.WHITE_STONE;
+        // }
     }
 
     private double getColorDistance(double[] cor1, double[] cor2) {

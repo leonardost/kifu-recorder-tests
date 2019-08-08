@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import src.models.Board;
+import src.models.Game;
 import src.similarityCalculator.FingerprintMatching;
 import src.similarityCalculator.SimilarityCalculatorInterface;
 import src.stoneDetector.StoneDetector;
@@ -34,11 +35,17 @@ public class process_image {
         StoneDetector stoneDetector = new StoneDetector();
         stoneDetector.setBoardDimension(19);
 
+        Game game = new Game(19, "", "", "6.5");
+
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
-            
             stoneDetector.setBoardImage(image);
+
+            // Board detectedBoard = game.getNumberOfMoves() == 0
+            //     ? stoneDetector.detect()
+            //     : stoneDetector.detect(game.getLastBoard(), game.canNextMoveBe(Board.BLACK_STONE), game.canNextMoveBe(Board.WHITE_STONE));
+            // game.checkForNewMoveAndAddItIfItIsValid(detectedBoard);
             Board detectedBoard = stoneDetector.detect();
 
             // Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".png", ortogonalBoardImage);
