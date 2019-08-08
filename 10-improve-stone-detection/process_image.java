@@ -10,6 +10,7 @@ import java.util.List;
 import java.io.File;
 import java.util.ArrayList;
 
+import src.models.Board;
 import src.similarityCalculator.FingerprintMatching;
 import src.similarityCalculator.SimilarityCalculatorInterface;
 import src.stoneDetector.StoneDetector;
@@ -28,18 +29,22 @@ public class process_image {
         }
 
         String imageSequenceFolder = args[0];
+        int numberOfImages = new File(imageSequenceFolder + "/images").list().length;
         SimilarityCalculatorInterface fingerprintMatching = new FingerprintMatching();
         StoneDetector stoneDetector = new StoneDetector();
         stoneDetector.setBoardDimension(19);
 
-        for (int imageIndex = 1; imageIndex <= 0; imageIndex++) {
+        for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             
             stoneDetector.setBoardImage(image);
+            Board detectedBoard = stoneDetector.detect();
 
             // Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".png", ortogonalBoardImage);
             System.out.println("Frame " + imageIndex);
+            System.out.println();
+            System.out.println(detectedBoard);
             System.out.println();
             System.out.println("Elapsed time = " + (System.nanoTime() - startTime) / 1000000000.0);
             System.out.println("=====");
