@@ -69,7 +69,7 @@ public class StoneDetector {
 
         getAverageColors(lastBoard, averageColors, counters);
 
-        List<MoveHypothesis> hipotesesDeJogadasEncontradas = new ArrayList<>();
+        List<MoveHypothesis> moveHypothesesFound = new ArrayList<>();
 
         for (int i = 0; i < boardDimension; ++i) {
             for (int j = 0; j < boardDimension; ++j) {
@@ -99,7 +99,7 @@ public class StoneDetector {
                 snapshot.append("    Hypothesis = " + hypothesis.color + " (confidence: " + hypothesis.confidence + ")\n");
 
                 if (hypothesis.color != Board.EMPTY) {
-                    hipotesesDeJogadasEncontradas.add(hypothesis);
+                    moveHypothesesFound.add(hypothesis);
                 }
                 /*
                 Ao invés de filtrar as jogadas por cor antes, vamos filtrá-las depois, acho que faz mais
@@ -122,7 +122,7 @@ public class StoneDetector {
         
         Move chosenMove = null;
         double biggestConfidence = 0;
-        for (MoveHypothesis hypothesis : hipotesesDeJogadasEncontradas) {
+        for (MoveHypothesis hypothesis : moveHypothesesFound) {
             if (hypothesis.confidence > biggestConfidence) {
                 biggestConfidence = hypothesis.confidence;
                 chosenMove = new Move(hypothesis.row, hypothesis.column, hypothesis.color);
@@ -163,8 +163,6 @@ public class StoneDetector {
                 for (int j = 0; j < boardImage.channels(); ++j) {
                     averageColors[i][j] /= counters[i];
                 }
-//                Log.d("KifuRecorder", "Cor média[" + i + "] = " + printColor(averageColors[i]));
-//                Log.d("KifuRecorder", "Luminancia[" + i + "] = " + luminance(averageColors[i]));
                 snapshot.append("Average color (");
                 if (i == Board.EMPTY) {
                     snapshot.append("empty intersections");
@@ -430,9 +428,9 @@ public class StoneDetector {
         double[] corMedia = new double[boardImage.channels()];
         for (int i = 0; i < boardImage.channels(); ++i) {
             corMedia[i] = mediaScalar.val[i];
+            snapshot.append("Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia));
         }
 
-//        Log.i("KifuRecorder", "Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia));
         return corMedia;
     }
 
@@ -535,7 +533,6 @@ public class StoneDetector {
         Scalar scalarAverage = Core.mean(boardImage);
 
         double[] average = new double[boardImage.channels()];
-        // for (int i = 0; i < scalarAverage.val.length; ++i) {
         for (int i = 0; i < boardImage.channels(); ++i) {
             average[i] = scalarAverage.val[i];
         }
