@@ -62,7 +62,6 @@ public class StoneDetector {
      * current game state.
      */
     public Board detect(Board lastBoard, boolean canBeBlackStone, boolean canBeWhiteStone) {
-        long startTime           = System.currentTimeMillis();
         double[][] averageColors = new double[3][boardImage.channels()];
         int[] counters           = new int[3];
 
@@ -139,12 +138,10 @@ public class StoneDetector {
             chosenMove = null;
         }
 
-        // Log.d("KifuRecorder", "TIME (detect()): " + (System.currentTimeMillis() - startTime));
         return lastBoard.generateNewBoardWith(chosenMove);
     }
 
     private void getAverageColors(Board lastBoard, double[][] averageColors, int[] counters) {
-        long startTime = System.currentTimeMillis();
         counters[Board.EMPTY] = 0;
         counters[Board.BLACK_STONE] = 0;
         counters[Board.WHITE_STONE] = 0;
@@ -160,7 +157,6 @@ public class StoneDetector {
                 }
             }
         }
-        // Log.d("KifuRecorder", "TIME (detect() (1)): " + (System.currentTimeMillis() - startTime));
 
         for (int i = 0; i < 3; ++i) {
             if (counters[i] > 0) {
@@ -396,8 +392,6 @@ public class StoneDetector {
      * @return
      */
     private double[] calculateAverageColors(int y, int x) {
-//        long tempoEntrou = System.currentTimeMillis();
-
         /**
 
          * The othogonal board image has a size of 500x500 pixels.
@@ -439,7 +433,6 @@ public class StoneDetector {
         }
 
 //        Log.i("KifuRecorder", "Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia));
-//        Log.d("KifuRecorder", "TEMPO (calculateAverageColors()): " + (System.currentTimeMillis() - tempoEntrou));
         return corMedia;
     }
 
