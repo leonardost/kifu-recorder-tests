@@ -434,7 +434,7 @@ public class StoneDetector {
         Scalar mediaScalar = Core.mean(roi);
 
         double[] corMedia = new double[boardImage.channels()];
-        for (int i = 0; i < mediaScalar.val.length; ++i) {
+        for (int i = 0; i < boardImage.channels(); ++i) {
             corMedia[i] = mediaScalar.val[i];
         }
 
@@ -542,7 +542,8 @@ public class StoneDetector {
         Scalar scalarAverage = Core.mean(boardImage);
 
         double[] average = new double[boardImage.channels()];
-        for (int i = 0; i < scalarAverage.val.length; ++i) {
+        // for (int i = 0; i < scalarAverage.val.length; ++i) {
+        for (int i = 0; i < boardImage.channels(); ++i) {
             average[i] = scalarAverage.val[i];
         }
 
