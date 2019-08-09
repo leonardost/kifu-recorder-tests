@@ -40,17 +40,19 @@ public class process_image {
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
+            if (image == null) continue;
             stoneDetector.setBoardImage(image);
 
-            // Board detectedBoard = game.getNumberOfMoves() == 0
-            //     ? stoneDetector.detect()
-            //     : stoneDetector.detect(game.getLastBoard(), game.canNextMoveBe(Board.BLACK_STONE), game.canNextMoveBe(Board.WHITE_STONE));
-            // game.checkForNewMoveAndAddItIfItIsValid(detectedBoard);
-            Board detectedBoard = stoneDetector.detect();
+            Board detectedBoard = game.getNumberOfMoves() == 0
+                ? stoneDetector.detect()
+                : stoneDetector.detect(game.getLastBoard(), game.canNextMoveBe(Board.BLACK_STONE), game.canNextMoveBe(Board.WHITE_STONE));
+            game.addNewMoveFrom(detectedBoard);
+            Board detectedBoardNoInfo = stoneDetector.detect();
 
-            // Imgcodecs.imwrite("processing/ortogonal" + padWithZeroes(imageIndex) + ".png", ortogonalBoardImage);
             System.out.println("Frame " + imageIndex);
-            System.out.println();
+            System.out.println("Detected board with no game information");
+            System.out.println(detectedBoardNoInfo);
+            System.out.println("Detected board with game information");
             System.out.println(detectedBoard);
             System.out.println();
             System.out.println("Elapsed time = " + (System.nanoTime() - startTime) / 1000000000.0);
@@ -68,7 +70,8 @@ public class process_image {
                 return Imgcodecs.imread(file.getAbsolutePath());
             }
         }
-        throw new Exception("File " + filename + " does not exist");
+        return null;
+        // throw new Exception("File " + filename + " does not exist");
     }
 
     private static String padWithZeroes(int number) {
