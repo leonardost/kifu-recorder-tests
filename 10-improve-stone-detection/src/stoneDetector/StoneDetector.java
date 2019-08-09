@@ -55,6 +55,73 @@ public class StoneDetector {
         return board;
     }
 
+
+    /**
+     * Returns the average color of the board
+     *
+     * THIS COLOR CHANGES AS THE GAME PROGRESSES AND AS THE AMBIENT ILLUMINATION CHANGES.
+     *
+     * @param boardImage
+     * @return
+     */
+    private double[] calculateAverageColorOfBoard(Mat boardImage) {
+        Scalar scalarAverage = Core.mean(boardImage);
+
+        double[] average = new double[boardImage.channels()];
+        for (int i = 0; i < boardImage.channels(); ++i) {
+            average[i] = scalarAverage.val[i];
+        }
+
+        return average;
+    }
+
+    /**
+     * Checks if a certain color is closer to a black or white stone.
+     *
+     * @param color Cor a ser verificada
+     * @param averageBoardColor Cor média da imagem do tabuleiro
+     * @return Pedra preta, branca, ou vazio
+     */
+    private int calculateColorHypothesis(double[] color, double[] averageBoardColor) {
+        double[] black = {0.0, 0.0, 0.0, 255.0};
+        double[] white = {255.0, 255.0, 255.0, 255.0};
+        double distanceToBlack = getColorDistance(color, black);
+        // double distanceToWhite = getColorDistance(color, white);
+        double distanceToAverageColor = getColorDistance(color, averageBoardColor);
+
+        // Testing other hypothesis
+        if (distanceToBlack < 80 || distanceToBlack < distanceToAverageColor) {
+            return Board.BLACK_STONE;
+        }
+//        else if (color[2] >= 150) {
+        else if (color[2] >= averageBoardColor[2] * 1.35) {
+            return Board.WHITE_STONE;
+        }
+
+        return Board.EMPTY;
+
+        // If the distance to the average color is below a certain threshold, it's very probable
+        // that it's an empty intersection
+        // if (distanceToAverageColor < 120) {
+        //     return Board.EMPTY;
+        // }
+
+        // if (distanceToBlack < distanceToWhite) {
+        //     return Board.BLACK_STONE;
+        // }
+        // else {
+        //     return Board.WHITE_STONE;
+        // }
+    }
+
+    private double getColorDistance(double[] cor1, double[] cor2) {
+        double distancia = 0;
+        for (int i = 0; i < Math.min(cor1.length, cor2.length); ++i) {
+            distancia += Math.abs(cor1[i] - cor2[i]);
+        }
+        return distancia;
+    }
+
     /**
      * Uses the information of the last game state to improve the detection
      * precision of the last move made. The parameters inform if the detector
@@ -127,13 +194,14 @@ public class StoneDetector {
             }
         }
 
-        if (chosenMove != null && (canBeBlackStone && chosenMove.color == Board.BLACK_STONE ||
-                canBeWhiteStone && chosenMove.color == Board.WHITE_STONE)) {
+        if (chosenMove != null && (
+                canBeBlackStone && chosenMove.color == Board.BLACK_STONE ||
+                canBeWhiteStone && chosenMove.color == Board.WHITE_STONE
+        )) {
             snapshot.append("Chosen move = " + chosenMove + " with confidence " + biggestConfidence + "\n");
         }
         else {
             snapshot.append("No move detected.\n");
-            chosenMove = null;
         }
 
         return lastBoard.generateNewBoardWith(chosenMove);
@@ -431,73 +499,6 @@ public class StoneDetector {
         }
 
         return corMedia;
-    }
-
-    /**
-     * Checks if a certain color is closer to a black or white stone.
-     *
-     * @param color Cor a ser verificada
-     * @param averageBoardColor Cor média da imagem do tabuleiro
-     * @return Pedra preta, branca, ou vazio
-     */
-    private int calculateColorHypothesis(double[] color, double[] averageBoardColor) {
-        double[] black = {0.0, 0.0, 0.0, 255.0};
-        double[] white = {255.0, 255.0, 255.0, 255.0};
-        double distanceToBlack = getColorDistance(color, black);
-        double distanceToWhite = getColorDistance(color, white);
-        double distanceToAverageColor = getColorDistance(color, averageBoardColor);
-
-        // Testing other hypothesis
-        if (distanceToBlack < 80 || distanceToBlack < distanceToAverageColor) {
-            return Board.BLACK_STONE;
-        }
-//        else if (color[2] >= 150) {
-        else if (color[2] >= averageBoardColor[2] * 1.35) {
-            return Board.WHITE_STONE;
-        }
-        else if (true) {
-            return Board.EMPTY;
-        }
-
-        // If the distance to the average color is below a certain threshold, it's very probable
-        // that it's an empty intersection
-        // if (distanceToAverageColor < 120) {
-        //     return Board.EMPTY;
-        // }
-
-        // if (distanceToBlack < distanceToWhite) {
-        //     return Board.BLACK_STONE;
-        // }
-        // else {
-        //     return Board.WHITE_STONE;
-        // }
-    }
-
-    private double getColorDistance(double[] cor1, double[] cor2) {
-        double distancia = 0;
-        for (int i = 0; i < Math.min(cor1.length, cor2.length); ++i) {
-            distancia += Math.abs(cor1[i] - cor2[i]);
-        }
-        return distancia;
-    }
-
-    /**
-     * Returns the average color of the board
-     *
-     * THIS COLOR CHANGES AS THE GAME PROGRESSES AND AS THE AMBIENT ILLUMINATION CHANGES.
-     *
-     * @param boardImage
-     * @return
-     */
-    private double[] calculateAverageColorOfBoard(Mat boardImage) {
-        Scalar scalarAverage = Core.mean(boardImage);
-
-        double[] average = new double[boardImage.channels()];
-        for (int i = 0; i < boardImage.channels(); ++i) {
-            average[i] = scalarAverage.val[i];
-        }
-
-        return average;
     }
 
 }

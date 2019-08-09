@@ -38,7 +38,7 @@ public class Game implements Serializable {
         return whitePlayer;
     }
 
-    public boolean checkForNewMoveAndAddItIfItIsValid(Board board) {
+    public boolean addNewMoveFrom(Board board) {
         Move move = board.getDifferenceTo(getLastBoard());
 
         if (move == null || repeatsPreviousState(board) || !canNextMoveBe(move.color)) {
