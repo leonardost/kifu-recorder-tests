@@ -1,14 +1,8 @@
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 
-import java.util.List;
 import java.io.File;
-import java.util.ArrayList;
 
 import src.models.Board;
 import src.models.Game;
