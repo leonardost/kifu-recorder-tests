@@ -114,12 +114,12 @@ public class StoneDetector {
         // }
     }
 
-    private double getColorDistance(double[] cor1, double[] cor2) {
-        double distancia = 0;
-        for (int i = 0; i < Math.min(cor1.length, cor2.length); ++i) {
-            distancia += Math.abs(cor1[i] - cor2[i]);
+    private double getColorDistance(double[] color1, double[] color2) {
+        double distance = 0;
+        for (int i = 0; i < Math.min(color1.length, color2.length); ++i) {
+            distance += Math.abs(color1[i] - color2[i]);
         }
-        return distancia;
+        return distance;
     }
 
     /**
@@ -135,6 +135,8 @@ public class StoneDetector {
         getAverageColors(lastBoard, averageColors, counters);
 
         List<MoveHypothesis> moveHypothesesFound = new ArrayList<>();
+
+        snapshot = new StringBuilder();
 
         for (int i = 0; i < boardDimension; ++i) {
             for (int j = 0; j < boardDimension; ++j) {
@@ -188,6 +190,7 @@ public class StoneDetector {
         Move chosenMove = null;
         double biggestConfidence = 0;
         for (MoveHypothesis hypothesis : moveHypothesesFound) {
+            System.out.println(hypothesis);
             if (hypothesis.confidence > biggestConfidence) {
                 biggestConfidence = hypothesis.confidence;
                 chosenMove = new Move(hypothesis.row, hypothesis.column, hypothesis.color);
@@ -203,6 +206,8 @@ public class StoneDetector {
         else {
             snapshot.append("No move detected.\n");
         }
+
+        // System.out.println(snapshot);
 
         return lastBoard.generateNewBoardWith(chosenMove);
     }
@@ -248,6 +253,14 @@ public class StoneDetector {
 
     private double luminance(double cor[]) {
         return 0.299 * cor[0] + 0.587 * cor[1] + 0.114 * cor[2];
+    }
+
+    private double variance(double color[]) {
+        double average = (color[0] + color[1] + color[2]) / 3;
+        double differences[] = {color[0] - average, color[1] - average, color[2] - average};
+        return (differences[0] * differences[0] +
+                differences[1] * differences[1] +
+                differences[2] * differences[2]) / 3;
     }
 
     private MoveHypothesis calculateColorHypothesis5(double[] cor, double[][] coresMedias, int[] contadores, double[][] coresNasPosicoesAdjacentes) {
@@ -429,14 +442,6 @@ public class StoneDetector {
         return saida.toString();
     }
 
-    private double variance(double color[]) {
-        double average = (color[0] + color[1] + color[2]) / 3;
-        double differences[] = {color[0] - average, color[1] - average, color[2] - average};
-        return (differences[0] * differences[0] +
-                differences[1] * differences[1] +
-                differences[2] * differences[2]) / 3;
-    }
-
     // TODO: Transformar hipóteses de recuperação de cor em classes separadas
     private double[] calculateAverageColorOnPosition(int row, int column) {
 
@@ -495,7 +500,7 @@ public class StoneDetector {
         double[] corMedia = new double[boardImage.channels()];
         for (int i = 0; i < boardImage.channels(); ++i) {
             corMedia[i] = mediaScalar.val[i];
-            snapshot.append("Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia));
+            snapshot.append("Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia) + "\n");
         }
 
         return corMedia;
