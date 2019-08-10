@@ -10,4 +10,8 @@ public class MoveHypothesis {
         this.color = color;
         this.confidence = confidence;
     }
+
+    public String toString() {
+        return "Move hypothesis (" + column + ", " + row + ") - " + color + " - " + confidence;
+    }
 }
