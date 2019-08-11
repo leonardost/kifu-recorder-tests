@@ -263,4 +263,22 @@ public class Board implements Serializable {
         }
     }
 
+    public int getNumberOfDifferencesBetweenThisAnd(Board otherBoard)
+    {
+        if (dimension != otherBoard.dimension) {
+            return -1;
+        }
+
+        int numberOfDifferences = 0;
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                if (board[i][j] != otherBoard.board[i][j]) {
+                    numberOfDifferences++;
+                }
+            }
+        }
+
+        return numberOfDifferences;
+    }
+
 }

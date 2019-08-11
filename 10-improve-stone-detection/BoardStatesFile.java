@@ -21,6 +21,10 @@ public class BoardStatesFile {
         Iterator<String> iterator = lines.iterator();
 
         String line = iterator.next();
+        while (line.startsWith("#")) {
+            line = iterator.next();
+            continue;
+        }
         boardDimension = Integer.parseInt(line);
 
         while (iterator.hasNext()) {
@@ -33,7 +37,6 @@ public class BoardStatesFile {
             Board board = getBoardFrom(iterator);
             boardStates.add(board);
         }
-
     }
 
     private List<String> readLinesFrom(String file) {
@@ -57,8 +60,6 @@ public class BoardStatesFile {
                     board.putStone(i, j, Board.BLACK_STONE);
                 } else if (boardLine.charAt(j) == 'W') {
                     board.putStone(i, j, Board.WHITE_STONE);
-                } else if (boardLine.charAt(j) == '.') {
-                    board.putStone(i, j, Board.EMPTY);
                 }
             }
         }
@@ -71,7 +72,9 @@ public class BoardStatesFile {
     }
 
     public Board getBoard(int frameNumber) {
-        return boardStates.get(frameNumber);
+        return shouldProcess.get(frameNumber - 1)
+            ? boardStates.get(frameNumber - 1)
+            : null;
     }
 
 }

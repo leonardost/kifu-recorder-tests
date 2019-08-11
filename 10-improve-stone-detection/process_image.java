@@ -25,6 +25,7 @@ public class process_image {
 
         String imageSequenceFolder = args[0];
         int numberOfImages = new File(imageSequenceFolder + "/images").list().length;
+        BoardStatesFile boardStatesFile = new BoardStatesFile(imageSequenceFolder);
         SimilarityCalculatorInterface fingerprintMatching = new FingerprintMatching();
         StoneDetector stoneDetector = new StoneDetector();
         stoneDetector.setBoardDimension(19);
@@ -32,6 +33,10 @@ public class process_image {
         Game game = new Game(19, "", "", "6.5");
 
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
+
+            Board expectedBoard = boardStatesFile.getBoard(imageIndex);
+            if (expectedBoard == null) continue;
+
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             if (image == null) continue;
@@ -48,6 +53,9 @@ public class process_image {
             System.out.println(detectedBoardNoInfo);
             System.out.println("Detected board with game information");
             System.out.println(detectedBoard);
+            System.out.println("Expected board");
+            System.out.println(expectedBoard);
+            System.out.println("Number of differences = " + expectedBoard.getNumberOfDifferencesBetweenThisAnd(detectedBoard));
             System.out.println();
             System.out.println("Elapsed time = " + (System.nanoTime() - startTime) / 1000000000.0);
             System.out.println("=====");
