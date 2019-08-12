@@ -14,6 +14,9 @@ public class BoardStatesFile {
     private List<Boolean> shouldProcess;
     private int boardDimension;
 
+    private static final int SHOULD_PROCESS_INDEX = 1;
+    private static final int IS_EQUAL_TO_LAST_BOARD_INDEX = 2;
+
     public BoardStatesFile(String imageSequenceFolder) {
         boardStates = new ArrayList<>();
         shouldProcess = new ArrayList<>();
@@ -32,9 +35,11 @@ public class BoardStatesFile {
             if (line.startsWith("#")) continue;
 
             String[] frameInfo = line.split(" ");
-            shouldProcess.add(frameInfo[1].equals("1"));
+            shouldProcess.add(frameInfo[SHOULD_PROCESS_INDEX].equals("1"));
 
-            Board board = getBoardFrom(iterator);
+            Board board = frameInfo[IS_EQUAL_TO_LAST_BOARD_INDEX].equals("1")
+                ? new Board(boardStates.get(boardStates.size() - 1))
+                : getBoardFrom(iterator);
             boardStates.add(board);
         }
     }
@@ -54,6 +59,7 @@ public class BoardStatesFile {
 
         for (int i = 0; i < boardDimension; i++) {
             String boardLine = iterator.next();
+            if (boardLine.startsWith("#")) continue;
 
             for (int j = 0; j < boardDimension; j++) {
                 if (boardLine.charAt(j) == 'B') {
