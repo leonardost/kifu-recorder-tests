@@ -197,6 +197,11 @@ public class StoneDetector {
             }
         }
 
+        if (isMovePossiblyPartOfAShadow(chosenMove, moveHypothesesFound)) {
+            System.out.println("Move is possibly part of a shadow");
+            chosenMove = null;
+        }
+
         if (chosenMove != null && (
                 canBeBlackStone && chosenMove.color == Board.BLACK_STONE ||
                 canBeWhiteStone && chosenMove.color == Board.WHITE_STONE
@@ -210,6 +215,49 @@ public class StoneDetector {
         // System.out.println(snapshot);
 
         return lastBoard.generateNewBoardWith(chosenMove);
+    }
+
+    // Shadows are often times detected as black stones. This method tries to detect when
+    // that happens by checking if a black mass of stones suddenly appeared on the board.
+    // IMPORTANT: A mass of black stones might already be on the board, the method should
+    // take that into account.
+    private boolean isMovePossiblyPartOfAShadow(Move move, List<MoveHypothesis> hypotheses)
+    {
+        if (move == null || move.color != Board.BLACK_STONE) return false;
+
+        // TODO: Put dimension of board here instead of hard coding 19
+        char[][] board = new char[19][19];
+        Boolean[][] visited = new Boolean[19][19];
+        for (int i = 0; i < 19; i++)
+            for (int j = 0; j < 19; j++) {
+                board[i][j] = '.';
+                visited[i][j] = false;
+            }
+
+        for (MoveHypothesis hypothesis : hypotheses) {
+            char color = hypothesis.color == Board.BLACK_STONE
+                ? 'B'
+                : (hypothesis.color == Board.WHITE_STONE ? 'W' : '.');
+            board[hypothesis.row][hypothesis.column] = color;
+        }
+
+        int numberOfVisits = dfs(move.row, move.column, board, visited);
+
+        return numberOfVisits >= 4;
+    }
+
+    private int dfs(int row, int column, char[][] board, Boolean[][] visited)
+    {
+        if (row < 0 || column < 0 || row >= 19 || column >= 19
+                || visited[row][column] || board[row][column] != 'B') return 0;
+
+        visited[row][column] = true;
+        int numberOfVisits = 1;
+        numberOfVisits += dfs(row - 1, column, board, visited);
+        numberOfVisits += dfs(row, column + 1, board, visited);
+        numberOfVisits += dfs(row + 1, column, board, visited);
+        numberOfVisits += dfs(row, column - 1, board, visited);
+        return numberOfVisits;
     }
 
     private void getAverageColors(Board lastBoard, double[][] averageColors, int[] counters) {
