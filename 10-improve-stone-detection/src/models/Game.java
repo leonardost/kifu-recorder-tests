@@ -101,6 +101,17 @@ public class Game implements Serializable {
     }
 
     /**
+     * Disconsider the last move and return it.
+     */
+    public Move undoLastMove() {
+        if (moves.isEmpty()) return null;
+        boards.remove(boards.size() - 1);
+        Move lastMove = moves.remove(moves.size() - 1);
+        numberOfUndoes++;
+        return lastMove;
+    }
+
+    /**
      * Rotates all boards of this game clockwise (direction = 1) or
      * counter-clockwise (direction = -1)
      */

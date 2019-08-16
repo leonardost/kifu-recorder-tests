@@ -14,30 +14,51 @@ public class Board implements Serializable {
     public final static int WHITE_STONE = 2;
 
     private int dimension;
-    private Integer[][] board;
+    private int[][] board;
+    // For how many frames each stone was identified on the board
+    // The longer, the more probable it is correct
+    private int[][] stability;
 
     public Board(int dimension) {
         this.dimension = dimension;
-        this.board = new Integer[dimension][dimension];
+        this.board = new int[dimension][dimension];
+        this.stability = new int[dimension][dimension];
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
                 board[i][j] = EMPTY;
+                stability[i][j] = 0;
             }
         }
     }
 
     public Board(Board board) {
         this.dimension = board.dimension;
-        this.board = new Integer[dimension][dimension];
+        this.board = new int[dimension][dimension];
+        this.stability = new int[dimension][dimension];
         for (int i = 0; i < dimension; ++i) {
             for (int j = 0; j < dimension; ++j) {
                 this.board[i][j] = board.board[i][j];
+                this.stability[i][j] = board.stability[i][j];
             }
         }
     }
 
     public int getDimension() {
         return dimension;
+    }
+
+    public void increaseStability(int row, int column) {
+        stability[row][column]++;
+    }
+
+    public void decreaseStability(int row, int column) {
+        if (stability[row][column] > 0) {
+            stability[row][column]--;
+        }
+        if (stability[row][column] == 0) {
+            board[row][column] = EMPTY;
+            System.out.println("Stone at (" + column + ", " + row + ") removed");
+        }
     }
 
     public void putStone(int row, int column, int stone) {
@@ -200,6 +221,7 @@ public class Board implements Serializable {
         }
 
         newBoard.board[move.row][move.column] = move.color;
+        newBoard.stability[move.row][move.column] = 3;
 
         Group groupOfMove = newBoard.groupAt(move.row, move.column);
         if (groupOfMove.hasNoLiberties()) return this;
@@ -219,6 +241,7 @@ public class Board implements Serializable {
     private void remove(Group group) {
         for (Position position : group.getPositions()) {
             board[position.row][position.column] = EMPTY;
+            stability[position.row][position.column] = 0;
         }
     }
 

@@ -144,7 +144,7 @@ public class StoneDetector {
                 snapshot.append(String.format("(%1$2d, %2$2d)", i, j) + "\n");
 
                 // Ignores the intersections of moves that were already made
-                if (lastBoard.getPosition(i, j) != Board.EMPTY) continue;
+                // if (lastBoard.getPosition(i, j) != Board.EMPTY) continue;
 
                 double[] colorAroundPosition = calculateAverageColorOnPosition(i, j);
 
@@ -165,9 +165,9 @@ public class StoneDetector {
 
                 snapshot.append("    Hypothesis = " + hypothesis.color + " (confidence: " + hypothesis.confidence + ")\n");
 
-                if (hypothesis.color != Board.EMPTY) {
+                // if (hypothesis.color != Board.EMPTY) {
                     moveHypothesesFound.add(hypothesis);
-                }
+                // }
                 /*
                 Ao invés de filtrar as jogadas por cor antes, vamos filtrá-las depois, acho que faz mais
                 sentido. Pega-se a jogada mais provável e verifica-se se ela é possível.
@@ -190,8 +190,16 @@ public class StoneDetector {
         Move chosenMove = null;
         double biggestConfidence = 0;
         for (MoveHypothesis hypothesis : moveHypothesesFound) {
-            System.out.println(hypothesis);
-            if (hypothesis.confidence > biggestConfidence) {
+            if (hypothesis.color != Board.EMPTY) System.out.println(hypothesis);
+            // We use all the move hypotheses to increase or decrease the confidence of all the
+            // previously detected stones
+            if (lastBoard.getPosition(hypothesis.row, hypothesis.column) != Board.EMPTY) {
+                if (hypothesis.color == lastBoard.getPosition(hypothesis.row, hypothesis.column)) {
+                    lastBoard.increaseStability(hypothesis.row, hypothesis.column);
+                } else {
+                    lastBoard.decreaseStability(hypothesis.row, hypothesis.column);
+                }
+            } else if (hypothesis.color != Board.EMPTY && hypothesis.confidence > biggestConfidence) {
                 biggestConfidence = hypothesis.confidence;
                 chosenMove = new Move(hypothesis.row, hypothesis.column, hypothesis.color);
             }
