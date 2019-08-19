@@ -54,6 +54,7 @@ public class Board implements Serializable {
     public void decreaseStability(int row, int column) {
         if (stability[row][column] > 0) {
             stability[row][column]--;
+            System.out.println("Decreasing stability of (" + column + ", " + row + ")");
         }
         if (stability[row][column] == 0) {
             board[row][column] = EMPTY;

@@ -214,10 +214,12 @@ public class StoneDetector {
                 canBeBlackStone && chosenMove.color == Board.BLACK_STONE ||
                 canBeWhiteStone && chosenMove.color == Board.WHITE_STONE
         )) {
+            System.out.println("Chosen move = " + chosenMove + " with confidence " + biggestConfidence);
             snapshot.append("Chosen move = " + chosenMove + " with confidence " + biggestConfidence + "\n");
         }
         else {
             snapshot.append("No move detected.\n");
+            System.out.println("No move detected.");
         }
 
         // System.out.println(snapshot);

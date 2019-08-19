@@ -32,6 +32,10 @@ public class process_image {
 
         Game game = new Game(19, "", "", "6.5");
 
+        System.out.println("Running experiment 10 on " + imageSequenceFolder);
+        System.out.println("=====");
+        long totalStartTime = System.nanoTime();
+
         for (int imageIndex = 1; imageIndex <= numberOfImages; imageIndex++) {
 
             Board expectedBoard = boardStatesFile.getBoard(imageIndex);
@@ -61,6 +65,7 @@ public class process_image {
             System.out.println("=====");
         }
 
+        System.out.println("Total elapsed time = " + (System.nanoTime() - totalStartTime) / 1000000000.0);
     }
 
     private static Mat readImageFile(String inputFolder, int imageNumber) throws Exception {

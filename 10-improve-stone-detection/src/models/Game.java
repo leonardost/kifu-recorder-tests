@@ -107,7 +107,6 @@ public class Game implements Serializable {
         if (moves.isEmpty()) return null;
         boards.remove(boards.size() - 1);
         Move lastMove = moves.remove(moves.size() - 1);
-        numberOfUndoes++;
         return lastMove;
     }
 
