@@ -44,18 +44,12 @@ public class process_image {
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             if (image == null) continue;
-            stoneDetector.setBoardImage(image);
 
-            Board detectedBoard = game.getNumberOfMoves() == 0
-                ? stoneDetector.detect()
-                : stoneDetector.detect(game.getLastBoard(), game.canNextMoveBe(Board.BLACK_STONE), game.canNextMoveBe(Board.WHITE_STONE));
-            game.addNewMoveFrom(detectedBoard);
-            Board detectedBoardNoInfo = stoneDetector.detect();
+            stoneDetector.setBoardImage(image);
+            Board detectedBoard = stoneDetector.detectBasedOn(game);
 
             System.out.println("Frame " + imageIndex);
-            System.out.println("Detected board with no game information");
-            System.out.println(detectedBoardNoInfo);
-            System.out.println("Detected board with game information");
+            System.out.println("Detected board");
             System.out.println(detectedBoard);
             System.out.println("Expected board");
             System.out.println(expectedBoard);

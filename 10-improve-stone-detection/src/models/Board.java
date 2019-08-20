@@ -49,9 +49,11 @@ public class Board implements Serializable {
 
     public void increaseStability(int row, int column) {
         stability[row][column]++;
+        System.out.println("Increasing stability of (" + column + ", " + row + ")");
     }
 
-    public void decreaseStability(int row, int column) {
+    // Returns true if a stone was removed
+    public boolean decreaseStability(int row, int column) {
         if (stability[row][column] > 0) {
             stability[row][column]--;
             System.out.println("Decreasing stability of (" + column + ", " + row + ")");
@@ -59,7 +61,9 @@ public class Board implements Serializable {
         if (stability[row][column] == 0) {
             board[row][column] = EMPTY;
             System.out.println("Stone at (" + column + ", " + row + ") removed");
+            return true;
         }
+        return false;
     }
 
     public void putStone(int row, int column, int stone) {

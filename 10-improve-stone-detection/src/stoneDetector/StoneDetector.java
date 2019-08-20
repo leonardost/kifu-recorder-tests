@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import src.models.Board;
+import src.models.Game;
 import src.models.Move;
 import src.models.MoveHypothesis;
 
@@ -32,10 +33,25 @@ public class StoneDetector {
         this.boardImage = boardImage;
     }
 
+    // Now I think using Game here makes more sense than using Board, because
+    // the stone detection code uses the current game information to know
+    // if it has to look for black or white stones.
+    //
+    // Take notice that Game can be modified, this is not good. This should be
+    // refactored later.
+    public Board detectBasedOn(Game game)
+    {
+        Board detectedBoard = game.getNumberOfMoves() == 0
+            ? detect()
+            : detect(game);
+        game.addNewMoveFrom(detectedBoard);
+        return detectedBoard;
+    }
+
     /**
      * Stone detection that does not use the previous state of the game.
      */
-    public Board detect() {
+    private Board detect() {
 
         Board board = new Board(boardDimension);
 
@@ -54,7 +70,6 @@ public class StoneDetector {
 
         return board;
     }
-
 
     /**
      * Returns the average color of the board
@@ -124,13 +139,14 @@ public class StoneDetector {
 
     /**
      * Uses the information of the last game state to improve the detection
-     * precision of the last move made. The parameters inform if the detector
-     * should look for a black stone, a white stone or both, according to the
-     * current game state.
+     * precision of the last move made
      */
-    public Board detect(Board lastBoard, boolean canBeBlackStone, boolean canBeWhiteStone) {
+    private Board detect(Game game) {
+        Board lastBoard = game.getLastBoard();
+        boolean canBeBlackStone = game.canNextMoveBe(Board.BLACK_STONE);
+        boolean canBeWhiteStone = game.canNextMoveBe(Board.WHITE_STONE);
         double[][] averageColors = new double[3][boardImage.channels()];
-        int[] counters           = new int[3];
+        int[] counters = new int[3];
 
         getAverageColors(lastBoard, averageColors, counters);
 
@@ -197,7 +213,14 @@ public class StoneDetector {
                 if (hypothesis.color == lastBoard.getPosition(hypothesis.row, hypothesis.column)) {
                     lastBoard.increaseStability(hypothesis.row, hypothesis.column);
                 } else {
-                    lastBoard.decreaseStability(hypothesis.row, hypothesis.column);
+                    boolean removedStone = lastBoard.decreaseStability(hypothesis.row, hypothesis.column);
+                    if (removedStone) {
+                        Move lastMove = game.getLastMove();
+                        if (hypothesis.row == lastMove.row && hypothesis.column == lastMove.column) {
+                            game.undoLastMove();
+                            System.out.println("Undoing last move of the game");
+                        }
+                    }
                 }
             } else if (hypothesis.color != Board.EMPTY && hypothesis.confidence > biggestConfidence) {
                 biggestConfidence = hypothesis.confidence;
