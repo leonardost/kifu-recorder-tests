@@ -51,7 +51,12 @@ public class Game implements Serializable {
     }
 
     /**
-     * Returns true if the new board repeats some previous game state (superko rule)
+     * Returns true if the new board repeats some previous game state (superko rule).
+     * 
+     * Now that StoneDetector can remove previously detected stones, maybe this should
+     * be revised, because there might be states which should not even have existed.
+     * I guess a simple ko checking would suffice (ensure previous board state is not
+     * repeated).
      */
     private boolean repeatsPreviousState(Board newBoard) {
         for (Board board : boards) {
@@ -131,6 +136,11 @@ public class Game implements Serializable {
 
         boards = rotatedBoards;
         moves = rotatedMoves;
+    }
+
+    public void removeStoneAt(int row, int column)
+    {
+
     }
 
 }

@@ -213,12 +213,18 @@ public class StoneDetector {
                 if (hypothesis.color == lastBoard.getPosition(hypothesis.row, hypothesis.column)) {
                     lastBoard.increaseStability(hypothesis.row, hypothesis.column);
                 } else {
-                    boolean removedStone = lastBoard.decreaseStability(hypothesis.row, hypothesis.column);
-                    if (removedStone) {
+                    boolean wasStoneRemoved = lastBoard.decreaseStability(hypothesis.row, hypothesis.column);
+                    if (wasStoneRemoved) {
                         Move lastMove = game.getLastMove();
                         if (hypothesis.row == lastMove.row && hypothesis.column == lastMove.column) {
+                            // The stone that was removed was the last played move
                             game.undoLastMove();
                             System.out.println("Undoing last move of the game");
+                            canBeBlackStone = game.canNextMoveBe(Board.BLACK_STONE);
+                            canBeWhiteStone = game.canNextMoveBe(Board.WHITE_STONE);
+                        } else {
+                            game.removeStoneAt(hypothesis.row, hypothesis.column);
+                            System.out.println("Removing move of the game");
                         }
                     }
                 }
@@ -241,8 +247,13 @@ public class StoneDetector {
             snapshot.append("Chosen move = " + chosenMove + " with confidence " + biggestConfidence + "\n");
         }
         else {
-            snapshot.append("No move detected.\n");
-            System.out.println("No move detected.");
+            if (chosenMove == null) {
+                snapshot.append("No move detected.");
+                System.out.println("No move detected.");
+            } else {
+                snapshot.append("Chosen move that is invalid = " + chosenMove);
+                System.out.println("Chosen move that is invalid = " + chosenMove);
+            }
         }
 
         // System.out.println(snapshot);
