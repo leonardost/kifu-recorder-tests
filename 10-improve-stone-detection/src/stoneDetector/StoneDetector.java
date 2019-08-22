@@ -234,7 +234,7 @@ public class StoneDetector {
             }
         }
 
-        if (isMovePossiblyPartOfAShadow(chosenMove, moveHypothesesFound)) {
+        if (isMovePossiblyPartOfAShadow(chosenMove, moveHypothesesFound, game.getLastBoard())) {
             System.out.println("Move is possibly part of a shadow");
             chosenMove = null;
         }
@@ -263,44 +263,53 @@ public class StoneDetector {
 
     // Shadows are often times detected as black stones. This method tries to detect when
     // that happens by checking if a black mass of stones suddenly appeared on the board.
-    // IMPORTANT: A mass of black stones might already be on the board, the method should
-    // take that into account.
-    private boolean isMovePossiblyPartOfAShadow(Move move, List<MoveHypothesis> hypotheses)
+    // 
+    // This is more useful in the beginning of the game, because from the middle to the
+    // ebd the board starts getting full of stones and shadows may not be detected anymore.
+    private boolean isMovePossiblyPartOfAShadow(Move move, List<MoveHypothesis> hypotheses, Board currentBoard)
     {
         if (move == null || move.color != Board.BLACK_STONE) return false;
 
-        // TODO: Put dimension of board here instead of hard coding 19
-        char[][] board = new char[19][19];
-        Boolean[][] visited = new Boolean[19][19];
-        for (int i = 0; i < 19; i++)
-            for (int j = 0; j < 19; j++) {
+        final int dimension = currentBoard.getDimension();
+        char[][] board = new char[dimension][dimension];
+        Boolean[][] visited = new Boolean[dimension][dimension];
+        for (int i = 0; i < dimension; i++)
+            for (int j = 0; j < dimension; j++) {
                 board[i][j] = '.';
                 visited[i][j] = false;
             }
 
+        // Filter out hypotheses which are on positions where black stones are already present
         for (MoveHypothesis hypothesis : hypotheses) {
-            char color = hypothesis.color == Board.BLACK_STONE
-                ? 'B'
-                : (hypothesis.color == Board.WHITE_STONE ? 'W' : '.');
-            board[hypothesis.row][hypothesis.column] = color;
+            board[hypothesis.row][hypothesis.column] =
+                currentBoard.getPosition(hypothesis.row, hypothesis.column) == Board.BLACK_STONE
+                ? '.'
+                : getColorLetter(hypothesis.color);
         }
 
-        int numberOfVisits = dfs(move.row, move.column, board, visited);
+        int numberOfVisits = dfs(move.row, move.column, board, visited, dimension);
 
         return numberOfVisits >= 4;
     }
 
-    private int dfs(int row, int column, char[][] board, Boolean[][] visited)
+    private char getColorLetter(int color)
     {
-        if (row < 0 || column < 0 || row >= 19 || column >= 19
+        if (color == Board.BLACK_STONE) return 'B';
+        else if (color == Board.WHITE_STONE) return 'W';
+        return '.';
+    }
+
+    private int dfs(int row, int column, char[][] board, Boolean[][] visited, int dimension)
+    {
+        if (row < 0 || column < 0 || row >= dimension || column >= dimension
                 || visited[row][column] || board[row][column] != 'B') return 0;
 
         visited[row][column] = true;
         int numberOfVisits = 1;
-        numberOfVisits += dfs(row - 1, column, board, visited);
-        numberOfVisits += dfs(row, column + 1, board, visited);
-        numberOfVisits += dfs(row + 1, column, board, visited);
-        numberOfVisits += dfs(row, column - 1, board, visited);
+        numberOfVisits += dfs(row - 1, column, board, visited, dimension);
+        numberOfVisits += dfs(row, column + 1, board, visited, dimension);
+        numberOfVisits += dfs(row + 1, column, board, visited, dimension);
+        numberOfVisits += dfs(row, column - 1, board, visited, dimension);
         return numberOfVisits;
     }
 
