@@ -28,6 +28,10 @@ public class Move implements Serializable {
         return new Position(row, column);
     }
 
+    public boolean isRemoval() {
+        return color == Board.EMPTY;
+    }
+
     public String sgf() {
         int l = 'a' + row;
         int c = 'a' + column;

@@ -96,9 +96,17 @@ public class Game implements Serializable {
         return moves.size();
     }
 
+    // Stone removal "moves" are ignored here
     public Move getLastMove() {
         if (moves.isEmpty()) return null;
-        return moves.get(moves.size() - 1);
+
+        int moveIndex = moves.size();
+        Move lastMove = null;
+        do {
+            moveIndex--;
+            lastMove = moves.get(moveIndex);
+        } while (moveIndex > 0 && lastMove.isRemoval());
+        return lastMove;
     }
 
     public Board getLastBoard() {
