@@ -140,7 +140,8 @@ public class Game implements Serializable {
 
     public void removeStoneAt(int row, int column)
     {
-
+        Move removedStone = Move.createRemoval(row, column);
+        moves.add(removedStone);
     }
 
 }

@@ -49,14 +49,14 @@ public class Board implements Serializable {
 
     public void increaseStability(int row, int column) {
         stability[row][column]++;
-        System.out.println("Increasing stability of (" + column + ", " + row + ")");
+        System.out.println("Increasing stability of (" + column + ", " + row + ") - " + stability[row][column]);
     }
 
     // Returns true if a stone was removed
     public boolean decreaseStability(int row, int column) {
         if (stability[row][column] > 0) {
             stability[row][column]--;
-            System.out.println("Decreasing stability of (" + column + ", " + row + ")");
+            System.out.println("Decreasing stability of (" + column + ", " + row + ") - " + stability[row][column]);
         }
         if (stability[row][column] == 0) {
             board[row][column] = EMPTY;

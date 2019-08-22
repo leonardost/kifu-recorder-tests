@@ -8,8 +8,6 @@ import java.io.Serializable;
 public class Move implements Serializable {
 
     public boolean isPass;
-    // used when some mistake in the stone detection must be corrected
-    public boolean isRemoval;
     public int row;
     public int column;
     public int color;
@@ -23,9 +21,7 @@ public class Move implements Serializable {
 
     public static Move createRemoval(int row, int column)
     {
-        Move move = new Move(row, column, 0);
-        move.isRemoval = true;
-        return move;
+        return new Move(row, column, Board.EMPTY);
     }
 
     public Position position() {
@@ -37,9 +33,14 @@ public class Move implements Serializable {
         int c = 'a' + column;
         String coordinate = "" + (char)c + (char)l;
         if (isPass) coordinate = "";
-        String property = this.color == Board.BLACK_STONE ? "B" : "W";
-        if (isRemoval) property = "AE";
-        return ";" + property + "[" + coordinate + "]";
+        return ";" + getSgfPropertyName() + "[" + coordinate + "]";
+    }
+
+    private String getSgfPropertyName() {
+        if (color == Board.BLACK_STONE) return "B";
+        else if (color == Board.WHITE_STONE) return "W";
+        // Remove stone (Add Empty space)
+        return "AE";
     }
 
     public String toString() {
