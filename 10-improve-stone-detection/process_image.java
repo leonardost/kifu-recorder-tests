@@ -1,8 +1,11 @@
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import src.models.Board;
 import src.models.Game;
@@ -19,7 +22,6 @@ public class process_image {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 1) {
-            // printUsage();
             return;
         }
 
@@ -44,6 +46,16 @@ public class process_image {
             long startTime = System.nanoTime();
             Mat image = readImageFile(imageSequenceFolder + "/images/", imageIndex);
             if (image == null) continue;
+
+            // Transform image to HSV and split channels
+            // Mat hsvImage = new Mat();
+            // Imgproc.cvtColor(image, hsvImage, Imgproc.COLOR_BGR2HSV, 3); // 3 channels
+            // Imgcodecs.imwrite("processing/image" + imageIndex + "_hsv.png", hsvImage);
+            // List<Mat> hsvChannels = new ArrayList<Mat>(3);
+            // Core.split(hsvImage, hsvChannels);
+            // Imgcodecs.imwrite("processing/image" + imageIndex + "_hsv_hue.png", hsvChannels.get(0));
+            // Imgcodecs.imwrite("processing/image" + imageIndex + "_hsv_saturation.png", hsvChannels.get(1));
+            // Imgcodecs.imwrite("processing/image" + imageIndex + "_hsv_value.png", hsvChannels.get(2));
 
             stoneDetector.setBoardImage(image);
             Board detectedBoard = stoneDetector.detectBasedOn(game);

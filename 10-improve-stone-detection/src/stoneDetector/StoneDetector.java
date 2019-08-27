@@ -3,6 +3,8 @@ package src.stoneDetector;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,9 +148,20 @@ public class StoneDetector {
         boolean canBeBlackStone = game.canNextMoveBe(Board.BLACK_STONE);
         boolean canBeWhiteStone = game.canNextMoveBe(Board.WHITE_STONE);
         double[][] averageColors = new double[3][boardImage.channels()];
+        double[] averageHue = new double[3];
+        double[] averageSaturation = new double[3];
+        double[] averageValue = new double[3];
         int[] counters = new int[3];
 
+        Mat hsvImage = new Mat();
+        Imgproc.cvtColor(boardImage, hsvImage, Imgproc.COLOR_BGR2HSV, 3);
+        List<Mat> hsvChannels = new ArrayList<Mat>(3);
+        Core.split(hsvImage, hsvChannels);
+
         getAverageColors(lastBoard, averageColors, counters);
+        getAverageOfChannel(lastBoard, averageHue, counters, hsvChannels.get(0), "hue");
+        getAverageOfChannel(lastBoard, averageSaturation, counters, hsvChannels.get(1), "saturation");
+        getAverageOfChannel(lastBoard, averageValue, counters, hsvChannels.get(2), "luminance");
 
         List<MoveHypothesis> moveHypothesesFound = new ArrayList<>();
 
@@ -162,7 +175,11 @@ public class StoneDetector {
                 // Ignores the intersections of moves that were already made
                 // if (lastBoard.getPosition(i, j) != Board.EMPTY) continue;
 
+                double[] hsvOnPosition = calculateAverageHsvOnPosition(i, j, hsvImage);
                 double[] colorAroundPosition = calculateAverageColorOnPosition(i, j);
+
+                // System.out.println("    HSV on " + String.format("(%d, %d)", i, j) + " = "
+                //     + String.format("(%f, %f, %f)", hsvOnPosition[0], hsvOnPosition[1], hsvOnPosition[2]));
 
                 double[][] colorsOnEmptyAdjacentPositions = new double[4][];
                 colorsOnEmptyAdjacentPositions[0] = (i > 0) ? lastBoard.getPosition(i - 1, j) == Board.EMPTY ? calculateAverageColorOnPosition(i - 1, j) : null : null;
@@ -178,6 +195,9 @@ public class StoneDetector {
                 MoveHypothesis hypothesis = calculateColorHypothesis5(colorAroundPosition, averageColors, counters, colorsOnEmptyAdjacentPositions);
                 hypothesis.row = i;
                 hypothesis.column = j;
+
+                // TODO: PAREI AQUI
+                // MoveHypothesis hypothesisHsv = calculateHypothesisHsv(averageHue, averageValue, counters);)
 
                 snapshot.append("    Hypothesis = " + hypothesis.color + " (confidence: " + hypothesis.confidence + ")\n");
 
@@ -363,6 +383,29 @@ public class StoneDetector {
                 differences[1] * differences[1] +
                 differences[2] * differences[2]) / 3;
     }
+    
+    private void getAverageOfChannel(Board lastBoard, double[] averageHue, int[] counters, Mat hueChannelImage, String label)
+    {
+        for (int i = 0; i < boardDimension; ++i) {
+            for (int j = 0; j < boardDimension; ++j) {
+                int colorOnPosition = lastBoard.getPosition(i, j);
+                double averageColorOnPosition = calculateAverageHueOnPosition(i, j, hueChannelImage);
+                averageHue[colorOnPosition] += averageColorOnPosition;
+            }
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            if (counters[i] > 0) {
+                averageHue[i] /= counters[i];
+                snapshot.append("Average " + label + " (");
+                System.out.print("Average " + label + " (");
+                if (i == Board.EMPTY) System.out.print("empty intersections");
+                else if (i == Board.BLACK_STONE) System.out.print("black stones");
+                else if (i == Board.WHITE_STONE) System.out.print("white stones");
+                System.out.println(") = " + averageHue[i]);
+            }
+        }
+    }
 
     private MoveHypothesis calculateColorHypothesis5(double[] cor, double[][] coresMedias, int[] contadores, double[][] coresNasPosicoesAdjacentes) {
         double[] preto = {10.0, 10.0, 10.0, 255.0};
@@ -543,16 +586,32 @@ public class StoneDetector {
         return saida.toString();
     }
 
+    private double calculateAverageHueOnPosition(int row, int column, Mat hueChannelImage)
+    {
+        int y = row * (int) boardImage.size().width / (boardDimension - 1);
+        int x = column * (int) boardImage.size().height / (boardDimension - 1);
+        double color[] = calculateAverageColors(y, x, hueChannelImage);
+        return color[0];        
+    }
+
     // TODO: Transformar hipóteses de recuperação de cor em classes separadas
     private double[] calculateAverageColorOnPosition(int row, int column) {
 
         int y = row * (int) boardImage.size().width / (boardDimension - 1);
         int x = column * (int) boardImage.size().height / (boardDimension - 1);
 
-        double[] color = calculateAverageColors(y, x);
+        double[] color = calculateAverageColors(y, x, boardImage);
         // Would a Gaussian average bring much improvement?
 //        double[] color = recuperarMediaGaussianaDeCores(boardImage, row, column);
         return color;
+    }
+
+    private double[] calculateAverageHsvOnPosition(int row, int column, Mat image) {
+
+        int y = row * (int) image.size().width / (boardDimension - 1);
+        int x = column * (int) image.size().height / (boardDimension - 1);
+        double[] hsv = calculateAverageColors(y, x, image);
+        return hsv;
     }
 
     /**
@@ -562,7 +621,7 @@ public class StoneDetector {
      * @param x
      * @return
      */
-    private double[] calculateAverageColors(int y, int x) {
+    private double[] calculateAverageColors(int y, int x, Mat image) {
         /**
 
          * The othogonal board image has a size of 500x500 pixels.
@@ -590,21 +649,21 @@ public class StoneDetector {
 
         // It's not a circle, but with the speedup gain, I think it's worth it to calculate the
         // average of colors this way
-        Mat roi = boardImage.submat(
+        Mat roi = image.submat(
                 Math.max(y - radius, 0),
-                Math.min(y + radius, boardImage.height()),
+                Math.min(y + radius, image.height()),
                 Math.max(x - radius, 0),
-                Math.min(x + radius, boardImage.width())
+                Math.min(x + radius, image.width())
         );
-        Scalar mediaScalar = Core.mean(roi);
+        Scalar averageScalar = Core.mean(roi);
 
-        double[] corMedia = new double[boardImage.channels()];
-        for (int i = 0; i < boardImage.channels(); ++i) {
-            corMedia[i] = mediaScalar.val[i];
-            snapshot.append("Cor média ao redor de (" + x + ", " + y + ") = " + printColor(corMedia) + "\n");
+        double[] averageColor = new double[image.channels()];
+        for (int i = 0; i < image.channels(); ++i) {
+            averageColor[i] = averageScalar.val[i];
+            snapshot.append("Cor média ao redor de (" + x + ", " + y + ") = " + printColor(averageColor) + "\n");
         }
 
-        return corMedia;
+        return averageColor;
     }
 
 }
