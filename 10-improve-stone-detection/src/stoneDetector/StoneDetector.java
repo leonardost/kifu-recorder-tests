@@ -151,6 +151,8 @@ public class StoneDetector {
         double[] averageHue = new double[3];
         double[] averageSaturation = new double[3];
         double[] averageValue = new double[3];
+        double[][] averageHsv = new double[3][3];
+        
         int[] counters = new int[3];
 
         Mat hsvImage = new Mat();
@@ -161,9 +163,10 @@ public class StoneDetector {
         getAverageColors(lastBoard, averageColors, counters);
         getAverageOfChannel(lastBoard, averageHue, counters, hsvChannels.get(0), "hue");
         getAverageOfChannel(lastBoard, averageSaturation, counters, hsvChannels.get(1), "saturation");
-        getAverageOfChannel(lastBoard, averageValue, counters, hsvChannels.get(2), "luminance");
+        getAverageOfChannel(lastBoard, averageValue, counters, hsvChannels.get(2), "value");
 
         List<MoveHypothesis> moveHypothesesFound = new ArrayList<>();
+        List<MoveHypothesis> hsvHypothesesFound = new ArrayList<>();
 
         snapshot = new StringBuilder();
 
@@ -175,7 +178,6 @@ public class StoneDetector {
                 // Ignores the intersections of moves that were already made
                 // if (lastBoard.getPosition(i, j) != Board.EMPTY) continue;
 
-                double[] hsvOnPosition = calculateAverageHsvOnPosition(i, j, hsvImage);
                 double[] colorAroundPosition = calculateAverageColorOnPosition(i, j);
 
                 // System.out.println("    HSV on " + String.format("(%d, %d)", i, j) + " = "
@@ -196,8 +198,12 @@ public class StoneDetector {
                 hypothesis.row = i;
                 hypothesis.column = j;
 
-                // TODO: PAREI AQUI
-                // MoveHypothesis hypothesisHsv = calculateHypothesisHsv(averageHue, averageValue, counters);)
+                double[] hsvOnPosition = calculateAverageHsvOnPosition(i, j, hsvImage);
+                MoveHypothesis hypothesisHsv = calculateHypothesisHsv(hsvOnPosition, averageHue, averageValue, counters);
+                hsvHypothesesFound.add(hypothesisHsv);
+                if (hypothesisHsv.color != Board.EMPTY) {
+                    System.out.println("    hypothesis hsv(" + j + ", " + i + ") = " + hypothesisHsv.color + " (confidence: " + hypothesisHsv.confidence + ")");
+                }
 
                 snapshot.append("    Hypothesis = " + hypothesis.color + " (confidence: " + hypothesis.confidence + ")\n");
 
@@ -586,12 +592,89 @@ public class StoneDetector {
         return saida.toString();
     }
 
+    private MoveHypothesis calculateHypothesisHsv(double[] hsvOnPosition, double[] averageHue, double[] averageValue, int[] counters)
+    {
+        double[] black = { 90.0, 60.0, 20.0 };
+        double[] white = { 100.0, 30.0, 210.0 };
+
+        double distanceToIntersectionAverage = 999;
+        if (counters[Board.EMPTY] > 0) {
+            distanceToIntersectionAverage = getHsvDistance(hsvOnPosition, new double[] { averageHue[Board.EMPTY], 0, averageValue[Board.EMPTY] });
+        }
+        double distanceToBlackStonesAverage = 999;
+        if (counters[Board.BLACK_STONE] > 0) {
+            distanceToBlackStonesAverage = getHsvDistance(hsvOnPosition, new double[] { averageHue[Board.BLACK_STONE], 0, averageValue[Board.BLACK_STONE] });
+        }
+        double distanceToWhiteStonesAverage = 999;
+        if (counters[Board.WHITE_STONE] > 0) {
+            distanceToWhiteStonesAverage = getHsvDistance(hsvOnPosition, new double[] { averageHue[Board.WHITE_STONE], 0, averageValue[Board.WHITE_STONE] });
+        }
+
+        double distanceToHypotheticalBlackStone = getHsvDistance(hsvOnPosition, black);
+        double distanceToHypotheticalWhiteStone = getHsvDistance(hsvOnPosition, white);
+        double distanceToIntersections = distanceToIntersectionAverage;
+        double distanceToBlackStones   = distanceToBlackStonesAverage;
+        double distanceToWhiteStones   = distanceToWhiteStonesAverage;
+
+        snapshot.append("    Distance to black stones average    = " + distanceToBlackStonesAverage + "\n");
+        snapshot.append("    Distance to black stones            = " + distanceToBlackStones + "\n");
+        snapshot.append("    Distance to white stones average    = " + distanceToWhiteStonesAverage + "\n");
+        snapshot.append("    Distance to white stones            = " + distanceToWhiteStones + "\n");
+        snapshot.append("    Distance to intersections average   = " + distanceToIntersectionAverage + "\n");
+        snapshot.append("    Distance to intersections           = " + distanceToIntersections + "\n");
+
+        if (counters[Board.BLACK_STONE] == 0 && counters[Board.WHITE_STONE] == 0) {
+            if (distanceToHypotheticalBlackStone < distanceToIntersections && distanceToHypotheticalBlackStone < distanceToHypotheticalWhiteStone) {
+                return new MoveHypothesis(Board.BLACK_STONE, 1);
+            }
+            return new MoveHypothesis(Board.EMPTY, 1);
+        }
+
+        if (counters[Board.WHITE_STONE] == 0) {
+            if (distanceToBlackStones < distanceToIntersections && distanceToBlackStones < distanceToHypotheticalWhiteStone) {
+                return new MoveHypothesis(Board.BLACK_STONE, 0.99);
+            }
+            if (distanceToHypotheticalWhiteStone < distanceToIntersections && distanceToHypotheticalWhiteStone < distanceToBlackStones) {
+                return new MoveHypothesis(Board.WHITE_STONE, 0.99);
+            }
+            return new MoveHypothesis(Board.EMPTY, 1);
+        }
+
+        double[] probabilityOfBeing = new double[3];
+
+        probabilityOfBeing[Board.BLACK_STONE] = 1 - (distanceToBlackStones);
+        probabilityOfBeing[Board.WHITE_STONE] = 1 - (distanceToWhiteStones);
+        probabilityOfBeing[Board.EMPTY] = 1 - (distanceToIntersections);
+
+        snapshot.append("    Probability of being a black stone = " + probabilityOfBeing[Board.BLACK_STONE] + "\n");
+        snapshot.append("    Probability of being a white stone = " + probabilityOfBeing[Board.WHITE_STONE] + "\n");
+        snapshot.append("    Probability of being empty         = " + probabilityOfBeing[Board.EMPTY] + "\n");
+
+        if (probabilityOfBeing[Board.BLACK_STONE] > probabilityOfBeing[Board.WHITE_STONE] &&
+                probabilityOfBeing[Board.BLACK_STONE] > probabilityOfBeing[Board.EMPTY]) {
+            return new MoveHypothesis(Board.BLACK_STONE, 0.9);
+        }
+
+        if (probabilityOfBeing[Board.WHITE_STONE] > probabilityOfBeing[Board.BLACK_STONE] &&
+                probabilityOfBeing[Board.WHITE_STONE] > probabilityOfBeing[Board.EMPTY]) {
+            return new MoveHypothesis(Board.WHITE_STONE, 0.9);
+        }
+
+        return new MoveHypothesis(Board.EMPTY, 1);
+    }
+
+    // Let's put a bigger weight on hue because it is the de facto color
+    private double getHsvDistance(double[] color1, double[] color2)
+    {
+        return (3 * Math.abs(color1[0] - color2[0]) + Math.abs(color1[2] - color2[2])) / 4;
+    }
+
     private double calculateAverageHueOnPosition(int row, int column, Mat hueChannelImage)
     {
         int y = row * (int) boardImage.size().width / (boardDimension - 1);
         int x = column * (int) boardImage.size().height / (boardDimension - 1);
         double color[] = calculateAverageColors(y, x, hueChannelImage);
-        return color[0];        
+        return color[0];
     }
 
     // TODO: Transformar hipóteses de recuperação de cor em classes separadas
